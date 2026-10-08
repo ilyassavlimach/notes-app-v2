@@ -13,6 +13,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.machinarium.notesv2.core.designsystem.theme.NotesV2Theme
 
+/** Static card with token padding, for content with its own actions (e.g. buttons inside). */
+@Composable
+fun NotesV2Card(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(NotesV2Theme.spacing.medium),
+            verticalArrangement = Arrangement.spacedBy(NotesV2Theme.spacing.small),
+            content = content,
+        )
+    }
+}
+
 /** Clickable card with token padding; the whole card is one touch target. */
 @Composable
 fun NotesV2Card(
@@ -36,7 +51,7 @@ fun NotesV2Card(
 
 @PreviewLightDark
 @Composable
-private fun NotesCardPreview() {
+private fun NotesV2CardPreview() {
     NotesV2Theme {
         NotesV2Card(onClick = {}) {
             Text(text = "Card content")

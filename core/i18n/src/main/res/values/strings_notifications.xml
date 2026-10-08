@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translate into every values-<lang>/strings_notifications.xml (I18N-04). -->
+<resources>
+    <string name="notifications_channel_general_name">General</string>
+    <string name="notifications_channel_general_description">Updates and reminders from the app</string>
+</resources>

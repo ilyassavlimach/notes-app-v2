@@ -44,8 +44,13 @@ internal class NotesListViewModel @Inject constructor(
         isRefreshing,
         refreshError,
         notesRepository.recentlyDeleted,
-    ) { notes, refreshing, error, undoNoteId ->
-        if (notes == null) NotesListUiState.Error(AppError.Unknown) else toUiState(notes, refreshing, error, undoNoteId)
+        notesRepository.observeHasUserNotes().catch { emit(false) },
+    ) { notes, refreshing, error, undoNoteId, hasUserNotes ->
+        if (notes == null) {
+            NotesListUiState.Error(AppError.Unknown)
+        } else {
+            toUiState(notes, refreshing, error, undoNoteId).withNotificationAsk(hasUserNotes)
+        }
     }
         .stateIn(
             scope = viewModelScope,
@@ -101,6 +106,9 @@ internal class NotesListViewModel @Inject constructor(
         error != null -> NotesListUiState.Error(error)
         else -> NotesListUiState.Empty()
     }
+
+    private fun NotesListUiState.withNotificationAsk(hasUserNotes: Boolean): NotesListUiState =
+        if (this is NotesListUiState.Content) copy(canAskForNotifications = hasUserNotes) else this
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

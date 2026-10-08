@@ -29,6 +29,11 @@ class FakeNotesRepository : NotesRepository {
 
     val restoredIds = mutableListOf<Long>()
 
+    /** When set, createNote / updateNote fail with it; otherwise the change is applied to the emitted notes. */
+    var saveFailure: AppResult.Failure? = null
+
+    val hasUserNotes = MutableStateFlow(false)
+
     fun emit(value: List<Note>) {
         notes.value = value
     }
@@ -39,6 +44,28 @@ class FakeNotesRepository : NotesRepository {
     }
 
     override fun observeNote(id: Long): Flow<Note?> = observeNotes().map { list -> list.firstOrNull { it.id == id } }
+
+    override fun observeHasUserNotes(): Flow<Boolean> = hasUserNotes
+
+    override suspend fun createNote(
+        title: String,
+        body: String,
+    ): AppResult<Long> {
+        saveFailure?.let { return it }
+        val id = (notes.value.maxOfOrNull(Note::id) ?: 0) + 1
+        notes.value = listOf(Note(id = id, title = title, body = body)) + notes.value
+        return AppResult.Success(id)
+    }
+
+    override suspend fun updateNote(
+        id: Long,
+        title: String,
+        body: String,
+    ): AppResult<Unit> {
+        saveFailure?.let { return it }
+        notes.value = notes.value.map { if (it.id == id) it.copy(title = title, body = body) else it }
+        return AppResult.Success(Unit)
+    }
 
     override suspend fun refresh(): AppResult<Unit> {
         refreshCount++

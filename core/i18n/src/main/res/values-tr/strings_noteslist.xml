@@ -5,4 +5,8 @@
     <string name="noteslist_refresh_failed">Yenilenemedi. Kayıtlı notlar gösteriliyor.</string>
     <string name="noteslist_note_deleted">Not silindi</string>
     <string name="noteslist_undo">Geri al</string>
+    <string name="noteslist_add_note">Not ekle</string>
+    <string name="noteslist_notifications_rationale">Notlarınla ilgili hatırlatma ve güncellemeler almak için bildirimleri aç.</string>
+    <string name="noteslist_notifications_allow">Aç</string>
+    <string name="noteslist_notifications_not_now">Şimdi değil</string>
 </resources>

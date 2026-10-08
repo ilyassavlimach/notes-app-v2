@@ -20,6 +20,8 @@ internal sealed interface NotesListUiState {
         val isRefreshing: Boolean,
         val refreshError: AppError?,
         override val undoNoteId: Long? = null,
+        /** The user has notes of their own, so asking for notifications makes sense now (PUSH-01). */
+        val canAskForNotifications: Boolean = false,
     ) : NotesListUiState
 }
 

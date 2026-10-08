@@ -9,4 +9,6 @@
     <string name="common_error_unknown">Something went wrong. Please try again.</string>
     <string name="common_back">Back</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_close">Close</string>
+    <string name="common_note_not_found">This note isn\'t available anymore.</string>
 </resources>

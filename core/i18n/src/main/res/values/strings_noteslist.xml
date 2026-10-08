@@ -5,4 +5,8 @@
     <string name="noteslist_refresh_failed">Couldn\'t refresh. Showing saved notes.</string>
     <string name="noteslist_note_deleted">Note deleted</string>
     <string name="noteslist_undo">Undo</string>
+    <string name="noteslist_add_note">Add note</string>
+    <string name="noteslist_notifications_rationale">Turn on notifications to get reminders and updates about your notes.</string>
+    <string name="noteslist_notifications_allow">Turn on</string>
+    <string name="noteslist_notifications_not_now">Not now</string>
 </resources>

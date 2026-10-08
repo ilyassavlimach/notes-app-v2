@@ -8,8 +8,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object NotesListKey : NavKey
 
-fun EntryProviderScope<NavKey>.notesListEntry(onNoteClick: (noteId: Long) -> Unit) {
+fun EntryProviderScope<NavKey>.notesListEntry(
+    onNoteClick: (noteId: Long) -> Unit,
+    onAddNoteClick: () -> Unit,
+) {
     entry<NotesListKey> {
-        NotesListRoute(onNoteClick = onNoteClick)
+        NotesListRoute(onNoteClick = onNoteClick, onAddNoteClick = onAddNoteClick)
     }
 }

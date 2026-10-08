@@ -2,7 +2,6 @@ package com.machinarium.notesv2.core.designsystem.components
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewLightDark
@@ -21,8 +20,8 @@ fun NotesV2AlertDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onConfirm) { Text(text = confirmLabel) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(text = dismissLabel) } },
+        confirmButton = { NotesV2TextButton(text = confirmLabel, onClick = onConfirm) },
+        dismissButton = { NotesV2TextButton(text = dismissLabel, onClick = onDismiss) },
         title = { Text(text = title) },
         text = { Text(text = text) },
         modifier = modifier,

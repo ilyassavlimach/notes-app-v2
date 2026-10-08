@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -111,8 +112,59 @@ class NotesListScreenTest {
     private fun content(refreshError: AppError? = null) =
         NotesListUiState.Content(PreviewNotes, isRefreshing = false, refreshError = refreshError)
 
+    @Test
+    fun addNoteClick_invokesCallback() {
+        var addCalls = 0
+        setScreen(content(), onAddNoteClick = { addCalls++ })
+
+        composeRule.onNodeWithContentDescription(stringResource(R.string.noteslist_add_note)).performClick()
+
+        assertEquals(1, addCalls)
+    }
+
+    @Test
+    fun rationale_allowClick_requestsPermission_andHidesCard() {
+        var requests = 0
+        setScreen(
+            content().copy(canAskForNotifications = true),
+            isPermissionGranted = false,
+            onAllowNotificationsClick = { requests++ },
+        )
+
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_rationale)).assertIsDisplayed()
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_allow)).performClick()
+
+        assertEquals(1, requests)
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_rationale)).assertDoesNotExist()
+    }
+
+    @Test
+    fun rationale_notNow_hidesCardWithoutRequesting() {
+        var requests = 0
+        setScreen(
+            content().copy(canAskForNotifications = true),
+            isPermissionGranted = false,
+            onAllowNotificationsClick = { requests++ },
+        )
+
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_not_now)).performClick()
+
+        assertEquals(0, requests)
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_rationale)).assertDoesNotExist()
+    }
+
+    @Test
+    fun rationale_isHidden_whenGrantedOrNoUserNotes() {
+        setScreen(content().copy(canAskForNotifications = true), isPermissionGranted = true)
+
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_notifications_rationale)).assertDoesNotExist()
+    }
+
     private fun setScreen(
         state: NotesListUiState,
+        isPermissionGranted: Boolean = true,
+        onAddNoteClick: () -> Unit = {},
+        onAllowNotificationsClick: () -> Unit = {},
         onNoteClick: (Long) -> Unit = {},
         onRefresh: () -> Unit = {},
         onRefreshErrorShown: () -> Unit = {},
@@ -123,11 +175,14 @@ class NotesListScreenTest {
             NotesV2Theme {
                 NotesListScreen(
                     uiState = state,
+                    isNotificationPermissionGranted = isPermissionGranted,
                     onNoteClick = onNoteClick,
+                    onAddNoteClick = onAddNoteClick,
                     onRefresh = onRefresh,
                     onRefreshErrorShown = onRefreshErrorShown,
                     onUndoDelete = onUndoDelete,
                     onUndoOffered = onUndoOffered,
+                    onAllowNotificationsClick = onAllowNotificationsClick,
                 )
             }
         }

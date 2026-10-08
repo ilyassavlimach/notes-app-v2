@@ -38,6 +38,29 @@ internal class FakeNoteDao : NoteDao {
         return if (exists) 1 else 0
     }
 
+    override fun observeHasLocal(): Flow<Boolean> =
+        rows.map { all -> all.any { it.syncState == SyncState.LOCAL && !it.isDeleted } }
+
+    override suspend fun insert(note: NoteEntity): Long {
+        writeFailure?.let { throw it }
+        val row = note.copy(id = nextId++)
+        rows.update { it + row }
+        return row.id
+    }
+
+    override suspend fun updateContent(
+        id: Long,
+        title: String,
+        body: String,
+        updatedAt: Long,
+    ): Int {
+        writeFailure?.let { throw it }
+        val target = rows.value.firstOrNull { it.id == id && !it.isDeleted } ?: return 0
+        val edited = target.copy(title = title, body = body, updatedAt = updatedAt, syncState = SyncState.LOCAL)
+        rows.update { all -> all.map { if (it.id == id) edited else it } }
+        return 1
+    }
+
     override suspend fun getRemoteBacked(): List<NoteEntity> = rows.value.filter { it.remoteId != null }
 
     override suspend fun upsertAll(notes: List<NoteEntity>) {

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="noteeditor_title_new">New note</string>
+    <string name="noteeditor_title_edit">Edit note</string>
+    <string name="noteeditor_save">Save</string>
+    <string name="noteeditor_field_title">Title</string>
+    <string name="noteeditor_field_body">Text</string>
+    <string name="noteeditor_error_title_required">Add a title</string>
+    <plurals name="noteeditor_error_too_long">
+        <item quantity="one">Too long (max %1$d character)</item>
+        <item quantity="other">Too long (max %1$d characters)</item>
+    </plurals>
+    <string name="noteeditor_counter">%1$d/%2$d</string>
+    <string name="noteeditor_save_failed">Couldn\'t save the note. Please try again.</string>
+    <string name="noteeditor_discard_title">Discard changes?</string>
+    <string name="noteeditor_discard_body">Your changes to this note will be lost.</string>
+    <string name="noteeditor_discard">Discard</string>
+    <string name="noteeditor_keep_editing">Keep editing</string>
+</resources>

@@ -15,12 +15,18 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.machinarium.notesv2.core.common.result.AppError
+import com.machinarium.notesv2.core.designsystem.components.NotesV2FloatingActionButton
 import com.machinarium.notesv2.core.designsystem.components.NotesV2TopAppBar
+import com.machinarium.notesv2.core.designsystem.icon.NotesV2Icons
 import com.machinarium.notesv2.core.designsystem.theme.NotesV2Theme
 import com.machinarium.notesv2.core.i18n.R
 import com.machinarium.notesv2.core.ui.EmptyState
@@ -33,13 +39,21 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 internal fun NotesListScreen(
     uiState: NotesListUiState,
+    isNotificationPermissionGranted: Boolean,
     onNoteClick: (noteId: Long) -> Unit,
+    onAddNoteClick: () -> Unit,
     onRefresh: () -> Unit,
     onRefreshErrorShown: () -> Unit,
     onUndoDelete: (noteId: Long) -> Unit,
     onUndoOffered: () -> Unit,
+    onAllowNotificationsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // "Not now" holds for this session (and survives rotation); the card comes back on the next app start.
+    var isRationaleDismissed by rememberSaveable { mutableStateOf(false) }
+    val showRationale = (uiState as? NotesListUiState.Content)?.canAskForNotifications == true &&
+        !isNotificationPermissionGranted &&
+        !isRationaleDismissed
     val snackbarHostState = remember { SnackbarHostState() }
     RefreshErrorEffect(uiState, snackbarHostState, onRefreshErrorShown)
     NoteDeletedEffect(uiState.undoNoteId, snackbarHostState, onUndoDelete, onUndoOffered)
@@ -47,34 +61,73 @@ internal fun NotesListScreen(
     Scaffold(
         modifier = modifier,
         topBar = { NotesV2TopAppBar(title = stringResource(R.string.noteslist_title)) },
+        floatingActionButton = { AddNoteButton(onClick = onAddNoteClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
-        val contentModifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding)
-        when (uiState) {
-            NotesListUiState.Loading -> LoadingState(modifier = contentModifier)
-            // Empty goes through the refreshable list so "pull down to refresh" actually works.
-            is NotesListUiState.Empty -> NotesList(
-                notes = persistentListOf(),
-                isRefreshing = false,
-                onRefresh = onRefresh,
-                onNoteClick = onNoteClick,
-                modifier = contentModifier,
-            )
-            is NotesListUiState.Error -> ErrorState(
-                message = stringResource(uiState.error.messageRes()),
-                onRetry = onRefresh,
-                modifier = contentModifier,
-            )
-            is NotesListUiState.Content -> NotesList(
-                notes = uiState.notes,
-                isRefreshing = uiState.isRefreshing,
-                onRefresh = onRefresh,
-                onNoteClick = onNoteClick,
-                modifier = contentModifier,
-            )
-        }
+        NotesListBody(
+            uiState = uiState,
+            onNoteClick = onNoteClick,
+            onRefresh = onRefresh,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            header = if (showRationale) {
+                {
+                    NotificationRationaleCard(
+                        onAllowClick = {
+                            isRationaleDismissed = true
+                            onAllowNotificationsClick()
+                        },
+                        onNotNowClick = { isRationaleDismissed = true },
+                    )
+                }
+            } else {
+                null
+            },
+        )
+    }
+}
+
+@Composable
+private fun AddNoteButton(onClick: () -> Unit) {
+    NotesV2FloatingActionButton(
+        icon = NotesV2Icons.Add,
+        contentDescription = stringResource(R.string.noteslist_add_note),
+        onClick = onClick,
+    )
+}
+
+@Composable
+private fun NotesListBody(
+    uiState: NotesListUiState,
+    onNoteClick: (noteId: Long) -> Unit,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
+) {
+    when (uiState) {
+        NotesListUiState.Loading -> LoadingState(modifier = modifier)
+        // Empty goes through the refreshable list so "pull down to refresh" actually works.
+        is NotesListUiState.Empty -> NotesList(
+            notes = persistentListOf(),
+            isRefreshing = false,
+            onRefresh = onRefresh,
+            onNoteClick = onNoteClick,
+            modifier = modifier,
+        )
+        is NotesListUiState.Error -> ErrorState(
+            message = stringResource(uiState.error.messageRes()),
+            onRetry = onRefresh,
+            modifier = modifier,
+        )
+        is NotesListUiState.Content -> NotesList(
+            notes = uiState.notes,
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            onNoteClick = onNoteClick,
+            modifier = modifier,
+            header = header,
+        )
     }
 }
 
@@ -86,6 +139,7 @@ private fun NotesList(
     onRefresh: () -> Unit,
     onNoteClick: (noteId: Long) -> Unit,
     modifier: Modifier = Modifier,
+    header: (@Composable () -> Unit)? = null,
 ) {
     PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh, modifier = modifier) {
         LazyColumn(
@@ -93,6 +147,7 @@ private fun NotesList(
             contentPadding = PaddingValues(NotesV2Theme.spacing.medium),
             verticalArrangement = Arrangement.spacedBy(NotesV2Theme.spacing.small),
         ) {
+            header?.let { content -> item(key = HEADER_KEY) { content() } }
             if (notes.isEmpty()) {
                 item(key = EMPTY_KEY) {
                     EmptyState(
@@ -151,18 +206,22 @@ private fun NoteDeletedEffect(
 }
 
 private const val EMPTY_KEY = "empty"
+private const val HEADER_KEY = "header"
 
 @PreviewLightDark
 @Composable
 private fun NotesListScreenContentPreview() {
     NotesV2Theme {
         NotesListScreen(
+            isNotificationPermissionGranted = true,
             uiState = NotesListUiState.Content(PreviewNotes, isRefreshing = false, refreshError = null),
             onNoteClick = {},
+            onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
+            onAllowNotificationsClick = {},
         )
     }
 }
@@ -172,12 +231,15 @@ private fun NotesListScreenContentPreview() {
 private fun NotesListScreenEmptyPreview() {
     NotesV2Theme {
         NotesListScreen(
+            isNotificationPermissionGranted = true,
             uiState = NotesListUiState.Empty(),
             onNoteClick = {},
+            onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
+            onAllowNotificationsClick = {},
         )
     }
 }
@@ -187,12 +249,15 @@ private fun NotesListScreenEmptyPreview() {
 private fun NotesListScreenErrorPreview() {
     NotesV2Theme {
         NotesListScreen(
+            isNotificationPermissionGranted = true,
             uiState = NotesListUiState.Error(AppError.Network),
             onNoteClick = {},
+            onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
+            onAllowNotificationsClick = {},
         )
     }
 }

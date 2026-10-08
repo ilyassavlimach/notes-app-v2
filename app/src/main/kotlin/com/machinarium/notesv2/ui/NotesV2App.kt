@@ -12,6 +12,8 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.machinarium.notesv2.feature.notedetail.navigation.NoteDetailKey
 import com.machinarium.notesv2.feature.notedetail.navigation.noteDetailEntry
+import com.machinarium.notesv2.feature.noteeditor.navigation.NoteEditorKey
+import com.machinarium.notesv2.feature.noteeditor.navigation.noteEditorEntry
 import com.machinarium.notesv2.feature.noteslist.navigation.NotesListKey
 import com.machinarium.notesv2.feature.noteslist.navigation.notesListEntry
 import com.machinarium.notesv2.ui.navigation.goBack
@@ -47,8 +49,15 @@ internal fun NotesV2App(
             rememberViewModelStoreNavEntryDecorator(),
         ),
         entryProvider = entryProvider {
-            notesListEntry(onNoteClick = { id -> backStack.navigateTo(NoteDetailKey(id)) })
-            noteDetailEntry(onBack = { backStack.goBack() })
+            notesListEntry(
+                onNoteClick = { id -> backStack.navigateTo(NoteDetailKey(id)) },
+                onAddNoteClick = { backStack.navigateTo(NoteEditorKey()) },
+            )
+            noteDetailEntry(
+                onBack = { backStack.goBack() },
+                onEditClick = { id -> backStack.navigateTo(NoteEditorKey(id)) },
+            )
+            noteEditorEntry(onClose = { backStack.goBack() })
         },
     )
 }

@@ -12,6 +12,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 internal fun NoteDetailRoute(
     noteId: Long,
     onBack: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: NoteDetailViewModel = hiltViewModel<NoteDetailViewModel, NoteDetailViewModel.Factory>(
         creationCallback = { factory -> factory.create(noteId) },
@@ -29,6 +30,7 @@ internal fun NoteDetailRoute(
         uiState = uiState,
         onBack = onBack,
         onRetry = viewModel::onRetry,
+        onEditClick = onEditClick,
         onDeleteClick = viewModel::onDeleteClick,
         onDeleteConfirm = viewModel::onDeleteConfirm,
         onDeleteDismiss = viewModel::onDeleteDismiss,

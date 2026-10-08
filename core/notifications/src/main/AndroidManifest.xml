@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+        <!-- PUSH-03: only FCM may deliver to this service. -->
+        <service
+            android:name="com.machinarium.notesv2.core.notifications.AppMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- PUSH-01 + SDK-01: channels are created by App Startup, not in Application.onCreate. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="com.machinarium.notesv2.core.notifications.NotificationChannelsInitializer"
+                android:value="androidx.startup" />
+        </provider>
+    </application>
+</manifest>

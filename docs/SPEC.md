@@ -124,7 +124,7 @@ Navigation 3, `NavDisplay` in `:app`:
 - Key arguments reach ViewModels through assisted injection.
 - Deep links: `https://<host>/notes/{id}` → `[NotesListKey, NoteDetailKey(id)]`. Anything else → `[NotesListKey]`.
   The host comes from the flavor. `DeepLinkParser` in `:app` handles both App Links and notification taps (data
-  key `deep_link`).
+  key `deeplink`).
 
 ## Environments
 | Flavor | applicationId | API base URL | Deep-link host |

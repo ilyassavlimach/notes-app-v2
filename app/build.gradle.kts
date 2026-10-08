@@ -83,7 +83,9 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(projects.core.i18n)
+    implementation(projects.core.notifications) // merges the FCM service and channel initializer into the manifest
     implementation(projects.feature.notedetail)
+    implementation(projects.feature.noteeditor)
     implementation(projects.feature.noteslist)
 
     implementation(libs.androidx.core.splashscreen)

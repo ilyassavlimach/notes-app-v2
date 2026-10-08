@@ -171,6 +171,17 @@ class NotesListViewModelTest {
         assertEquals(AppError.Unknown, assertIs<NotesListUiState.Content>(viewModel.uiState.value).refreshError)
     }
 
+    @Test
+    fun `given the user has own notes, then content allows asking for notifications`() = runTest {
+        repository.emit(listOf(sampleNote))
+        val viewModel = createViewModel()
+        assertEquals(false, assertIs<NotesListUiState.Content>(viewModel.uiState.value).canAskForNotifications)
+
+        repository.hasUserNotes.value = true
+
+        assertEquals(true, assertIs<NotesListUiState.Content>(viewModel.uiState.value).canAskForNotifications)
+    }
+
     private companion object {
         val sampleNote = Note(id = 1, title = "Groceries", body = "Milk, eggs")
         val otherNote = Note(id = 2, title = "Books", body = "Dune")

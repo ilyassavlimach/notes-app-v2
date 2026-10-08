@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="notedetail_title">Not</string>
-    <string name="notedetail_not_found">Bu not artık mevcut değil.</string>
     <string name="notedetail_delete">Sil</string>
     <string name="notedetail_delete_confirm_title">Bu not silinsin mi?</string>
     <string name="notedetail_delete_confirm_body">Not listesinden geri alabilirsin.</string>
     <string name="notedetail_delete_failed">Not silinemedi. Lütfen tekrar dene.</string>
+    <string name="notedetail_edit">Düzenle</string>
 </resources>

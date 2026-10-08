@@ -12,6 +12,7 @@ import com.machinarium.notesv2.core.model.Note
 import com.machinarium.notesv2.core.network.NotesApi
 import com.machinarium.notesv2.core.network.model.NoteDto
 import com.machinarium.notesv2.core.network.safeApiCall
+import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,6 +28,7 @@ import kotlinx.coroutines.withContext
 internal class OfflineFirstNotesRepository @Inject constructor(
     private val notesApi: NotesApi,
     private val noteDao: NoteDao,
+    private val clock: Clock,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : NotesRepository {
 
@@ -38,12 +40,39 @@ internal class OfflineFirstNotesRepository @Inject constructor(
 
     override fun observeNote(id: Long): Flow<Note?> = noteDao.observeVisibleById(id).map { it?.toDomain() }
 
+    override fun observeHasUserNotes(): Flow<Boolean> = noteDao.observeHasLocal()
+
     override suspend fun refresh(): AppResult<Unit> = withContext(ioDispatcher) {
         when (val result = safeApiCall { notesApi.getNotes() }) {
             is AppResult.Success -> databaseCall { noteDao.mergeRemote(result.data.map(NoteDto::toSyncedEntity)) }
             // The database is left untouched, so offline users keep every note.
             is AppResult.Failure -> result
         }
+    }
+
+    override suspend fun createNote(
+        title: String,
+        body: String,
+    ): AppResult<Long> = withContext(ioDispatcher) {
+        databaseCall {
+            noteDao.insert(
+                NoteEntity(
+                    remoteId = null,
+                    title = title,
+                    body = body,
+                    updatedAt = clock.millis(),
+                    syncState = SyncState.LOCAL,
+                ),
+            )
+        }
+    }
+
+    override suspend fun updateNote(
+        id: Long,
+        title: String,
+        body: String,
+    ): AppResult<Unit> = withContext(ioDispatcher) {
+        databaseCall { noteDao.updateContent(id, title, body, updatedAt = clock.millis()) }.requireRowChanged()
     }
 
     override suspend fun deleteNote(id: Long): AppResult<Unit> = setDeleted(id, isDeleted = true).also { result ->
@@ -60,17 +89,7 @@ internal class OfflineFirstNotesRepository @Inject constructor(
         id: Long,
         isDeleted: Boolean,
     ): AppResult<Unit> = withContext(ioDispatcher) {
-        when (val result = databaseCall { noteDao.setDeleted(id, isDeleted) }) {
-            // 0 rows: the note is gone (e.g. removed by a refresh), so nothing changed.
-            is AppResult.Success -> if (result.data >
-                0
-            ) {
-                AppResult.Success(Unit)
-            } else {
-                AppResult.Failure(AppError.Unknown)
-            }
-            is AppResult.Failure -> result
-        }
+        databaseCall { noteDao.setDeleted(id, isDeleted) }.requireRowChanged()
     }
 
     private suspend fun <T> databaseCall(block: suspend () -> T): AppResult<T> = try {
@@ -83,3 +102,9 @@ internal class OfflineFirstNotesRepository @Inject constructor(
 
 private fun NoteDto.toSyncedEntity(): NoteEntity =
     NoteEntity(remoteId = id, title = title, body = body, updatedAt = 0, syncState = SyncState.SYNCED)
+
+/** 0 rows changed means the note is gone (e.g. removed by a refresh or deleted), so the write did nothing. */
+private fun AppResult<Int>.requireRowChanged(): AppResult<Unit> = when (this) {
+    is AppResult.Success -> if (data > 0) AppResult.Success(Unit) else AppResult.Failure(AppError.Unknown)
+    is AppResult.Failure -> this
+}

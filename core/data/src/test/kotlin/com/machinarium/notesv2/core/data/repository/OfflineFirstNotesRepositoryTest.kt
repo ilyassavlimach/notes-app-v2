@@ -8,7 +8,11 @@ import com.machinarium.notesv2.core.database.model.SyncState
 import com.machinarium.notesv2.core.model.Note
 import com.machinarium.notesv2.core.network.model.NoteDto
 import java.io.IOException
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +25,8 @@ class OfflineFirstNotesRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val notesApi = FakeNotesApi()
     private val noteDao = FakeNoteDao()
-    private val repository = OfflineFirstNotesRepository(notesApi, noteDao, testDispatcher)
+    private val clock = Clock.fixed(Instant.ofEpochMilli(NOW_MILLIS), ZoneOffset.UTC)
+    private val repository = OfflineFirstNotesRepository(notesApi, noteDao, clock, testDispatcher)
 
     @Test
     fun `given stored rows, when observed, then emits visible domain notes`() = runTest(testDispatcher) {
@@ -135,8 +140,53 @@ class OfflineFirstNotesRepositoryTest {
         assertEquals(AppResult.Failure(AppError.Unknown), repository.deleteNote(1))
     }
 
+    @Test
+    fun `when a note is created, then it is stored as a local note with the current time`() = runTest(testDispatcher) {
+        val result = repository.createNote(title = "Mine", body = "Body")
+
+        val id = assertIs<AppResult.Success<Long>>(result).data
+        val expected = NoteEntity(
+            id = id,
+            remoteId = null,
+            title = "Mine",
+            body = "Body",
+            updatedAt = NOW_MILLIS,
+            syncState = SyncState.LOCAL,
+        )
+        assertEquals(listOf(expected), noteDao.stored)
+        assertEquals(true, repository.observeHasUserNotes().first())
+    }
+
+    @Test
+    fun `given the database write fails, when created, then fails with unknown error`() = runTest(testDispatcher) {
+        noteDao.writeFailure = SQLiteFullException("disk full")
+
+        assertEquals(AppResult.Failure(AppError.Unknown), repository.createNote(title = "Mine", body = "Body"))
+    }
+
+    @Test
+    fun `when a seeded note is updated, then it becomes local with the new content`() = runTest(testDispatcher) {
+        noteDao.upsertAll(listOf(entity(remoteId = 1)))
+
+        val result = repository.updateNote(id = 1, title = "Edited", body = "New")
+
+        assertEquals(AppResult.Success(Unit), result)
+        val expected = entity(remoteId = 1, title = "Edited")
+            .copy(id = 1, body = "New", updatedAt = NOW_MILLIS, syncState = SyncState.LOCAL)
+        assertEquals(listOf(expected), noteDao.stored)
+    }
+
+    @Test
+    fun `given no such note, when updated, then fails`() = runTest(testDispatcher) {
+        assertEquals(AppResult.Failure(AppError.Unknown), repository.updateNote(id = 42, title = "T", body = "B"))
+    }
+
     private fun entity(
         remoteId: Long,
         title: String = "Note $remoteId",
     ) = NoteEntity(remoteId = remoteId, title = title, body = "Body", updatedAt = 0, syncState = SyncState.SYNCED)
+
+    private companion object {
+        const val NOW_MILLIS = 1_700_000_000_000L
+    }
 }

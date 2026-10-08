@@ -41,15 +41,15 @@
 - [x] notedetail-10 Strings (en, tr)                                   gate: core/i18n
 - [x] notedetail-done Rule of two, full gate + dead code + auto-commit
 ### noteeditor
-- [ ] noteeditor-4 Repository: createNote, updateNote (injected Clock) + tests   gate: core/data
-- [ ] noteeditor-5 :core:notifications rendered + wired (channels, service, ALLOWED_DEEP_LINK_SCHEMES, tr)   gate: core/notifications
-- [ ] noteeditor-6 ViewModel (assisted noteId?, SavedStateHandle) + validation + tests
+- [x] noteeditor-4 Repository: createNote, updateNote (injected Clock) + tests   gate: core/data
+- [x] noteeditor-5 :core:notifications rendered + wired (channels, service, ALLOWED_DEEP_LINK_SCHEMES, tr)   gate: core/notifications
+- [x] noteeditor-6 ViewModel (assisted noteId?, SavedStateHandle) + validation + tests
         (note_created / note_edited)                                   gate: feature/noteeditor
-- [ ] noteeditor-7 UI: Route, Screen, text fields, discard dialog, BackHandler, previews, UI test   gate: feature/noteeditor
-- [ ] noteeditor-8 NotesList FAB + NotificationRationaleCard (rationale → request UI test); NoteDetail edit action   gate: feature/noteslist feature/notedetail
-- [ ] noteeditor-9 Navigation wiring (from list FAB and detail edit)   gate: app
-- [ ] noteeditor-10 Strings (en, tr)                                   gate: core/i18n
-- [ ] noteeditor-done Rule of two, full gate + dead code + auto-commit
+- [x] noteeditor-7 UI: Route, Screen, text fields, discard dialog, BackHandler, previews, UI test   gate: feature/noteeditor
+- [x] noteeditor-8 NotesList FAB + NotificationRationaleCard (rationale → request UI test); NoteDetail edit action   gate: feature/noteslist feature/notedetail
+- [x] noteeditor-9 Navigation wiring (from list FAB and detail edit)   gate: app
+- [x] noteeditor-10 Strings (en, tr)                                   gate: core/i18n
+- [x] noteeditor-done Rule of two, full gate + dead code + auto-commit
 ### app gate (remote config)
 - [ ] config-1 :core:config rendered, strings tr, AppGateViewModel + tests, NotesV2App shows AppGateScreen   gate: core/config app
 - [ ] config-done Full gate + dead code + auto-commit

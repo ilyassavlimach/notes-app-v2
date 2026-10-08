@@ -36,6 +36,7 @@ internal fun NoteDetailScreen(
     uiState: NoteDetailUiState,
     onBack: () -> Unit,
     onRetry: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
     onDeleteConfirm: () -> Unit,
     onDeleteDismiss: () -> Unit,
@@ -47,7 +48,9 @@ internal fun NoteDetailScreen(
 
     Scaffold(
         modifier = modifier,
-        topBar = { NoteDetailTopAppBar(isContent = uiState is NoteDetailUiState.Content, onBack, onDeleteClick) },
+        topBar = {
+            NoteDetailTopAppBar(isContent = uiState is NoteDetailUiState.Content, onBack, onEditClick, onDeleteClick)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val contentModifier = Modifier
@@ -56,7 +59,7 @@ internal fun NoteDetailScreen(
         when (uiState) {
             NoteDetailUiState.Loading, NoteDetailUiState.Deleted -> LoadingState(modifier = contentModifier)
             NoteDetailUiState.NotFound -> EmptyState(
-                message = stringResource(R.string.notedetail_not_found),
+                message = stringResource(R.string.common_note_not_found),
                 modifier = contentModifier,
             )
             is NoteDetailUiState.Error -> ErrorState(
@@ -78,6 +81,7 @@ internal fun NoteDetailScreen(
 private fun NoteDetailTopAppBar(
     isContent: Boolean,
     onBack: () -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
     NotesV2TopAppBar(
@@ -87,6 +91,11 @@ private fun NoteDetailTopAppBar(
         onNavigationClick = onBack,
         actions = {
             if (isContent) {
+                NotesV2IconButton(
+                    icon = NotesV2Icons.Edit,
+                    contentDescription = stringResource(R.string.notedetail_edit),
+                    onClick = onEditClick,
+                )
                 NotesV2IconButton(
                     icon = NotesV2Icons.Delete,
                     contentDescription = stringResource(R.string.notedetail_delete),
@@ -158,6 +167,7 @@ private fun NoteDetailScreenContentPreview() {
             uiState = PreviewNoteDetail,
             onBack = {},
             onRetry = {},
+            onEditClick = {},
             onDeleteClick = {},
             onDeleteConfirm = {},
             onDeleteDismiss = {},
@@ -174,6 +184,7 @@ private fun NoteDetailScreenDeleteDialogPreview() {
             uiState = PreviewNoteDetail.copy(isDeleteDialogVisible = true),
             onBack = {},
             onRetry = {},
+            onEditClick = {},
             onDeleteClick = {},
             onDeleteConfirm = {},
             onDeleteDismiss = {},
@@ -190,6 +201,7 @@ private fun NoteDetailScreenNotFoundPreview() {
             uiState = NoteDetailUiState.NotFound,
             onBack = {},
             onRetry = {},
+            onEditClick = {},
             onDeleteClick = {},
             onDeleteConfirm = {},
             onDeleteDismiss = {},

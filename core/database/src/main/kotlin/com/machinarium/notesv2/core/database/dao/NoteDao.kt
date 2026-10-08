@@ -1,6 +1,7 @@
 package com.machinarium.notesv2.core.database.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -22,6 +23,24 @@ interface NoteDao {
     suspend fun setDeleted(
         id: Long,
         isDeleted: Boolean,
+    ): Int
+
+    @Query("SELECT EXISTS(SELECT 1 FROM notes WHERE syncState = 'LOCAL' AND isDeleted = 0)")
+    fun observeHasLocal(): Flow<Boolean>
+
+    @Insert
+    suspend fun insert(note: NoteEntity): Long
+
+    /** Edits a visible note and marks it LOCAL, so a refresh never overwrites it. Returns rows changed. */
+    @Query(
+        "UPDATE notes SET title = :title, body = :body, updatedAt = :updatedAt, syncState = 'LOCAL' " +
+            "WHERE id = :id AND isDeleted = 0",
+    )
+    suspend fun updateContent(
+        id: Long,
+        title: String,
+        body: String,
+        updatedAt: Long,
     ): Int
 
     @Query("SELECT * FROM notes WHERE remoteId IS NOT NULL")

@@ -36,7 +36,7 @@ class NoteDetailScreenTest {
     fun notFoundState_showsMessage_andNoDeleteAction() {
         setScreen(NoteDetailUiState.NotFound)
 
-        composeRule.onNodeWithText(stringResource(R.string.notedetail_not_found)).assertIsDisplayed()
+        composeRule.onNodeWithText(stringResource(R.string.common_note_not_found)).assertIsDisplayed()
         composeRule.onNodeWithContentDescription(stringResource(R.string.notedetail_delete)).assertDoesNotExist()
     }
 
@@ -58,13 +58,14 @@ class NoteDetailScreenTest {
     }
 
     @Test
-    fun backAndDeleteActions_invokeCallbacks() {
+    fun backEditAndDeleteActions_invokeCallbacks() {
         setScreen(PreviewNoteDetail)
 
         composeRule.onNodeWithContentDescription(stringResource(R.string.common_back)).performClick()
+        composeRule.onNodeWithContentDescription(stringResource(R.string.notedetail_edit)).performClick()
         composeRule.onNodeWithContentDescription(stringResource(R.string.notedetail_delete)).performClick()
 
-        assertEquals(listOf("back", "delete"), calls)
+        assertEquals(listOf("back", "edit", "delete"), calls)
     }
 
     @Test
@@ -96,6 +97,7 @@ class NoteDetailScreenTest {
                     uiState = state,
                     onBack = { calls += "back" },
                     onRetry = { calls += "retry" },
+                    onEditClick = { calls += "edit" },
                     onDeleteClick = { calls += "delete" },
                     onDeleteConfirm = { calls += "confirm" },
                     onDeleteDismiss = { calls += "dismiss" },

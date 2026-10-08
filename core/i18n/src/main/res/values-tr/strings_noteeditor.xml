@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="noteeditor_title_new">Yeni not</string>
+    <string name="noteeditor_title_edit">Notu düzenle</string>
+    <string name="noteeditor_save">Kaydet</string>
+    <string name="noteeditor_field_title">Başlık</string>
+    <string name="noteeditor_field_body">Metin</string>
+    <string name="noteeditor_error_title_required">Bir başlık ekle</string>
+    <plurals name="noteeditor_error_too_long">
+        <item quantity="one">Çok uzun (en fazla %1$d karakter)</item>
+        <item quantity="other">Çok uzun (en fazla %1$d karakter)</item>
+    </plurals>
+    <string name="noteeditor_counter">%1$d/%2$d</string>
+    <string name="noteeditor_save_failed">Not kaydedilemedi. Lütfen tekrar dene.</string>
+    <string name="noteeditor_discard_title">Değişiklikler silinsin mi?</string>
+    <string name="noteeditor_discard_body">Bu nottaki değişikliklerin kaybolacak.</string>
+    <string name="noteeditor_discard">Değişiklikleri sil</string>
+    <string name="noteeditor_keep_editing">Düzenlemeye devam et</string>
+</resources>

@@ -3,3 +3,7 @@
 plugins {
     id("app.android.feature")
 }
+
+dependencies {
+    implementation(projects.core.notifications)
+}

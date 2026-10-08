@@ -116,6 +116,33 @@ class NoteDaoTest {
         assertEquals(0, noteDao.setDeleted(id = 42, isDeleted = true))
     }
 
+    @Test
+    fun `given a seeded note, when edited, then it becomes local, moves to the top and survives a refresh`() = runTest {
+        noteDao.mergeRemote(listOf(remote(remoteId = 1), remote(remoteId = 2)))
+        val id = noteDao.observeVisible().first().last().id
+
+        assertEquals(1, noteDao.updateContent(id, title = "Edited", body = "New body", updatedAt = 50))
+        noteDao.mergeRemote(listOf(remote(remoteId = 1), remote(remoteId = 2)))
+
+        assertEquals(listOf("Edited", "Remote 1"), noteDao.observeVisible().first().map(NoteEntity::title))
+        assertEquals(true, noteDao.observeHasLocal().first())
+    }
+
+    @Test
+    fun `given a deleted note, when edited, then nothing changes`() = runTest {
+        val id = noteDao.insert(local(title = "Gone", updatedAt = 1).copy(isDeleted = true))
+
+        assertEquals(0, noteDao.updateContent(id, title = "Edited", body = "Body", updatedAt = 2))
+        assertEquals(false, noteDao.observeHasLocal().first())
+    }
+
+    @Test
+    fun `when a note is inserted, then its generated id is returned`() = runTest {
+        val id = noteDao.insert(local(title = "New", updatedAt = 1))
+
+        assertEquals("New", noteDao.observeVisibleById(id).first()?.title)
+    }
+
     private fun remote(
         remoteId: Long,
         title: String = "Remote $remoteId",
