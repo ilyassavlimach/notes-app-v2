@@ -154,7 +154,7 @@ Always on: Navigation 3, Timber, Chucker (debug), LeakCanary (debug), App Startu
 ## Hardening
 | # | Item | Applies | How / why N/A |
 |---|---|---|---|
-| 1 | Certificate pinning | yes | OkHttp `CertificatePinner` from `api.<flavor>.certPins`: intermediate + root of jsonplaceholder.typicode.com read from the live chain in E1, plus backup roots from other CAs (system trust store). Source and date recorded here in E1. |
+| 1 | Certificate pinning | yes | OkHttp `CertificatePinner` from `api.<flavor>.certPins`. Read 2026-10-08 from the live chain of jsonplaceholder.typicode.com: WE1 intermediate `kIdp6NNE…/A4=` and GTS Root R4 `mEflZT5e…Q0c=`; backups from the macOS system trust store: GTS Root R1 `hxqRlPTu…3Gc=` and ISRG Root X1 `C5+lpZ7t…r8M=`. Recompute: `openssl s_client -connect host:443 -showcerts` → `openssl x509 -pubkey -noout \| openssl pkey -pubin -outform der \| openssl dgst -sha256 -binary \| base64`. **Confirm before release.** |
 | 2 | Encryption at rest | N/A | no tokens, credentials or personal data; notes are user text the user chose to keep on the device, protected by app sandbox + backup rules |
 | 3 | R8 + keep rules | yes | minify + shrinkResources, project proguard-rules.pro |
 | 4 | Play Integrity | N/A | no sensitive data or operations |

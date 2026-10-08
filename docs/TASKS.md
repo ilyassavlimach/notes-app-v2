@@ -55,8 +55,8 @@
 - [x] config-done Full gate + dead code + auto-commit
 
 ## Stage E — hardening & handover
-- [ ] E1 Hardening (pins for jsonplaceholder.typicode.com from the live chain + backup roots)
-- [ ] E2 assembleProdRelease (R8)
+- [x] E1 Hardening (pins for jsonplaceholder.typicode.com from the live chain + backup roots)
+- [x] E2 assembleProdRelease (R8)
 - [ ] E2b Release smoke test on an emulator (list, create, edit, delete/undo, detail, offline, tr, deep link)
 - [ ] E3 Final gate (GATE_FINAL=1)
 - [ ] E4 /code-review (high), fix findings with regression tests

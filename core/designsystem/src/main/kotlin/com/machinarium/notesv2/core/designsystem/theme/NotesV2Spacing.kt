@@ -14,6 +14,8 @@ data class NotesV2Spacing(
     val large: Dp = 24.dp,
     val extraLarge: Dp = 32.dp,
     val minTouchTarget: Dp = 48.dp,
+    /** Bottom space for scrolling content under a FAB (56 dp button + 16 dp margin + 16 dp gap). */
+    val fabClearance: Dp = 88.dp,
 )
 
 internal val LocalNotesV2Spacing = staticCompositionLocalOf { NotesV2Spacing() }

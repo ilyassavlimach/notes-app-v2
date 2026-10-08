@@ -5,7 +5,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -141,10 +143,18 @@ private fun NotesList(
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,
 ) {
+    val listState = rememberLazyListState()
+    ScrollToNewTopNoteEffect(topNoteId = notes.firstOrNull()?.id, listState = listState)
     PullToRefreshBox(isRefreshing = isRefreshing, onRefresh = onRefresh, modifier = modifier) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(NotesV2Theme.spacing.medium),
+            state = listState,
+            contentPadding = PaddingValues(
+                start = NotesV2Theme.spacing.medium,
+                top = NotesV2Theme.spacing.medium,
+                end = NotesV2Theme.spacing.medium,
+                bottom = NotesV2Theme.spacing.fabClearance, // the last card stays readable above the FAB
+            ),
             verticalArrangement = Arrangement.spacedBy(NotesV2Theme.spacing.small),
         ) {
             header?.let { content -> item(key = HEADER_KEY) { content() } }
@@ -178,6 +188,23 @@ private fun RefreshErrorEffect(
             // Also when the screen leaves composition mid-snackbar, so the error isn't replayed on return.
             onShown()
         }
+    }
+}
+
+/**
+ * A note the user just created or edited is added at the top, but a lazy list keeps its scroll anchored to the
+ * item that was first before, so the new note would sit off-screen. Scroll up when the top note changes — but
+ * not on the first composition (e.g. coming back from a note), so the user's scroll position is kept.
+ */
+@Composable
+private fun ScrollToNewTopNoteEffect(
+    topNoteId: Long?,
+    listState: LazyListState,
+) {
+    var lastTopNoteId by rememberSaveable { mutableStateOf(topNoteId) }
+    LaunchedEffect(topNoteId) {
+        if (topNoteId != null && topNoteId != lastTopNoteId) listState.animateScrollToItem(0)
+        lastTopNoteId = topNoteId
     }
 }
 

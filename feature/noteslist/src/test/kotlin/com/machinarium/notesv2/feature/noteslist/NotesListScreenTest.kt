@@ -1,5 +1,8 @@
 package com.machinarium.notesv2.feature.noteslist
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToIndexAction
@@ -7,6 +10,7 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,6 +19,8 @@ import com.machinarium.notesv2.core.designsystem.theme.NotesV2Theme
 import com.machinarium.notesv2.core.i18n.R
 import com.machinarium.notesv2.core.testing.resource.stringResource
 import kotlin.test.assertEquals
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -109,8 +115,36 @@ class NotesListScreenTest {
             .assertIsDisplayed()
     }
 
-    private fun content(refreshError: AppError? = null) =
-        NotesListUiState.Content(PreviewNotes, isRefreshing = false, refreshError = refreshError)
+    private fun content(
+        refreshError: AppError? = null,
+        notes: ImmutableList<NoteItemUi> = PreviewNotes,
+    ) = NotesListUiState.Content(notes, isRefreshing = false, refreshError = refreshError)
+
+    @Test
+    fun scrolledList_whenANoteIsAddedAtTheTop_scrollsUpToShowIt() { // regression: new note was off-screen
+        var state by mutableStateOf(content(notes = manyNotes))
+        composeRule.setContent {
+            NotesV2Theme {
+                NotesListScreen(
+                    uiState = state,
+                    isNotificationPermissionGranted = true,
+                    onNoteClick = {},
+                    onAddNoteClick = {},
+                    onRefresh = {},
+                    onRefreshErrorShown = {},
+                    onUndoDelete = {},
+                    onUndoOffered = {},
+                    onAllowNotificationsClick = {},
+                )
+            }
+        }
+        composeRule.onNode(hasScrollToIndexAction()).performScrollToIndex(manyNotes.lastIndex)
+
+        state = content(notes = (listOf(newNote) + manyNotes).toImmutableList())
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(newNote.title).assertIsDisplayed()
+    }
 
     @Test
     fun addNoteClick_invokesCallback() {
@@ -191,5 +225,9 @@ class NotesListScreenTest {
     private companion object {
         const val SNACKBAR_TIMEOUT_MILLIS = 10_000L
         const val DELETED_ID = 5L
+        val manyNotes = (1L..30L).map {
+            NoteItemUi(id = it, title = "Note $it", preview = "Body $it")
+        }.toImmutableList()
+        val newNote = NoteItemUi(id = 99, title = "Brand new note", preview = "Just saved")
     }
 }
