@@ -60,8 +60,8 @@
 - [x] E2b Release smoke test on an emulator (list, create, edit, delete/undo, detail, offline, tr, deep link)
 - [x] E3 Final gate (GATE_FINAL=1)
 - [x] E4 /code-review (high), fix findings with regression tests
-- [ ] E5 mobile-codebase-audit → docs/audit/ (≥ 80, every category ≥ 8)
-- [ ] E6 Audit fix loop (max 2)
-- [ ] E7 Handover checklist → docs/HANDOVER.xlsx
-- [ ] E8 README.md, CLAUDE.md, progress.md
-- [ ] E9 Final report → ask before final commit / push
+- [x] E5 mobile-codebase-audit → docs/audit/ (≥ 80, every category ≥ 8)
+- [x] E6 Audit fix loop (max 2)
+- [x] E7 Handover checklist → docs/HANDOVER.xlsx
+- [x] E8 README.md, CLAUDE.md, progress.md
+- [x] E9 Final report → ask before final commit / push

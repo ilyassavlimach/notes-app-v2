@@ -1,0 +1,645 @@
+{
+  "version": 1,
+  "actions": [
+    {
+      "id": "SIGN-1",
+      "when": "always",
+      "area": "Release signing",
+      "task": "Create the release keystore",
+      "owner": "DevOps",
+      "blocker": true,
+      "why": "Play only accepts builds signed with your upload key; the project never stores a keystore.",
+      "how": "1. keytool -genkeypair -v -keystore release.jks -alias upload -keyalg RSA -keysize 4096 -validity 10000\n2. Store release.jks and both passwords in your password manager (losing them blocks future updates).\n3. Enrol in Play App Signing when creating the app (STORE-2).",
+      "verify": "KEYSTORE_PATH=… ./gradlew :app:bundleProdRelease, then: apksigner verify --print-certs on an APK from the bundle",
+      "auto": null
+    },
+    {
+      "id": "SIGN-2",
+      "when": "always",
+      "area": "Release signing",
+      "task": "Add the signing secrets to GitHub",
+      "owner": "DevOps",
+      "blocker": true,
+      "why": "release.yml builds the signed AAB only when these secrets exist (HARD-07).",
+      "how": "GitHub → repo → Settings → Secrets and variables → Actions → New repository secret:\nKEYSTORE_BASE64 = output of: base64 -i release.jks\nKEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD",
+      "verify": "Push a v* tag → the Release workflow uploads release-aab",
+      "auto": null
+    },
+    {
+      "id": "CI-1",
+      "when": "always",
+      "area": "CI",
+      "task": "Add NVD_API_KEY for the dependency scan",
+      "owner": "DevOps",
+      "blocker": false,
+      "why": "dependency-scan.yml (OWASP) fails or is extremely slow without an NVD API key (HARD-08).",
+      "how": "1. Request a free key at https://nvd.nist.gov/developers/request-an-api-key\n2. Add it as the GitHub secret NVD_API_KEY.",
+      "verify": "Actions → Dependency scan → Run workflow succeeds",
+      "auto": null
+    },
+    {
+      "id": "CI-2",
+      "when": "always",
+      "area": "CI",
+      "task": "Protect main and require the CI check",
+      "owner": "DevOps",
+      "blocker": false,
+      "why": "The rules are only enforced for humans if a red CI blocks merging (CI-01).",
+      "how": "GitHub → Settings → Branches → Add rule for main: require a pull request, require status check 'verify' (CI workflow), block force-pushes.",
+      "verify": "Open a PR with a failing test → merge is blocked",
+      "auto": null
+    },
+    {
+      "id": "STORE-1",
+      "when": "always",
+      "area": "Store",
+      "task": "Replace the placeholder app icon",
+      "owner": "Product",
+      "blocker": true,
+      "why": "The template ships a placeholder launcher glyph.",
+      "how": "Android Studio → New → Image Asset (adaptive + monochrome) → replace app/src/main/res/drawable/ic_launcher_foreground.xml and the ic_launcher_background color.",
+      "verify": "Install the app: the launcher shows the real icon (also in themed-icons mode)",
+      "auto": "placeholder_icon"
+    },
+    {
+      "id": "STORE-2",
+      "when": "always",
+      "area": "Store",
+      "task": "Create the Play Console app and store listing",
+      "owner": "Product",
+      "blocker": true,
+      "why": "Needed before the first upload: listing, content rating, target audience, privacy policy URL.",
+      "how": "Play Console → Create app (package {package}) → Store listing, App content (content rating, target audience, privacy policy, ads), enable Play App Signing.",
+      "verify": "Upload the AAB to the internal testing track without errors",
+      "auto": null
+    },
+    {
+      "id": "STORE-3",
+      "when": "always",
+      "area": "Store",
+      "task": "Fill in the Data safety form",
+      "owner": "Product",
+      "blocker": true,
+      "why": "Required by Play; must list what the app and its SDKs collect ({sdk_list}).",
+      "how": "Play Console → App content → Data safety. Use each SDK's data-safety guidance; declare encryption in transit (HTTPS only).",
+      "verify": "Data safety section shows 'Completed'",
+      "auto": null
+    },
+    {
+      "id": "STORE-4",
+      "when": "always",
+      "area": "Store",
+      "task": "Set the release version",
+      "owner": "Developer",
+      "blocker": false,
+      "why": "versionCode must grow with every upload; the build reads it from Gradle properties.",
+      "how": "CI or local: ./gradlew :app:bundleProdRelease -Papp.versionCode=<n> -Papp.versionName=<x.y.z>",
+      "verify": "aapt2 dump badging shows the expected versionCode",
+      "auto": null
+    },
+    {
+      "id": "API-1",
+      "when": "api",
+      "area": "Backend",
+      "task": "Confirm the production and stage API URLs",
+      "owner": "Backend",
+      "blocker": true,
+      "why": "Each flavor reads api.<flavor>.baseUrl; the skill only knew the URL given in intake.",
+      "how": "Set api.prod.baseUrl / api.stage.baseUrl in gradle.properties (or ~/.gradle/gradle.properties / CI -P). Include the API version in the path (DATA-07).",
+      "verify": "installStageDebug and installProdDebug both load data",
+      "auto": "prod_base_url"
+    },
+    {
+      "id": "API-2",
+      "when": "api",
+      "area": "Security",
+      "task": "Confirm the certificate pins for the production host",
+      "owner": "DevOps",
+      "blocker": true,
+      "why": "Wrong pins block every request in release builds; the skill read them from the live chain (HARD-01).",
+      "how": "1. Compare api.prod.certPins with the commands in SPEC.md → Hardening (intermediate + root + backup roots).\n2. Put a calendar reminder before the intermediate certificate expires.",
+      "verify": "Release build loads data; a pin mismatch shows an error, not 'no internet'",
+      "auto": "prod_pins"
+    },
+    {
+      "id": "ENV-1",
+      "when": "flavors",
+      "area": "Environments",
+      "task": "Provide the stage environment",
+      "owner": "Backend",
+      "blocker": false,
+      "why": "The stage flavor ({stage_package}) talks to api.stage.baseUrl and installs next to prod.",
+      "how": "Make sure the stage backend exists and set api.stage.baseUrl / api.stage.certPins. Register {stage_package} wherever the prod package is registered (Firebase, deep links, OAuth).",
+      "verify": "installStageDebug shows 'Stage' in the app name and loads data",
+      "auto": null
+    },
+    {
+      "id": "FB-1",
+      "when": "firebase",
+      "area": "Firebase",
+      "task": "Create the Firebase project and both Android apps",
+      "owner": "DevOps",
+      "blocker": true,
+      "why": "Analytics, Crashlytics, push, Remote Config and App Distribution need a Firebase project.",
+      "how": "Firebase console → Add project → Add Android app twice: {package} and {stage_package} (or one project per environment). Add the SHA-1/SHA-256 of the debug and release/upload keys.",
+      "verify": "Both apps appear in Project settings",
+      "auto": null
+    },
+    {
+      "id": "FB-2",
+      "when": "firebase",
+      "area": "Firebase",
+      "task": "Replace the placeholder google-services.json",
+      "owner": "Developer",
+      "blocker": true,
+      "why": "The skill used a placeholder so the build works; real Firebase services need the real file with both clients.",
+      "how": "Project settings → Your apps → download google-services.json (it contains both apps) → app/google-services.json. Keep it out of git if the team prefers (CI: store it as a secret and write it in the workflow).",
+      "verify": "App starts and Firebase logs show the project id; handover_check.py marks this Done",
+      "auto": "google_services_real"
+    },
+    {
+      "id": "FB-3",
+      "when": "crashlytics",
+      "area": "Firebase",
+      "task": "Enable Crashlytics and test it",
+      "owner": "Developer",
+      "blocker": false,
+      "why": "Crash reports reach the dashboard only after the first crash from a configured app.",
+      "how": "Firebase → Crashlytics → Enable. Trigger a test crash from a debug-only menu, restart the app.",
+      "verify": "The test crash appears in Crashlytics",
+      "auto": null
+    },
+    {
+      "id": "PUSH-1",
+      "when": "push",
+      "area": "Push",
+      "task": "Set up the backend sender",
+      "owner": "Backend",
+      "blocker": false,
+      "why": "The app only receives; something must send FCM messages (HTTP v1 API).",
+      "how": "Create a service account with the 'Firebase Cloud Messaging API Admin' role; send messages with notification.title/body and data.deeplink (allowed schemes only, PUSH-02).",
+      "verify": "Firebase console → Messaging → Send test message to a device token",
+      "auto": null
+    },
+    {
+      "id": "PUSH-2",
+      "when": "push",
+      "area": "Push",
+      "task": "Bind PushTokenSink to the backend",
+      "owner": "Developer",
+      "blocker": false,
+      "why": "Until a PushTokenSink is bound, device tokens are not sent anywhere (PUSH-03).",
+      "how": "Implement PushTokenSink in :core:data (register the token through WorkManager with retry) and @Binds it; add the backend endpoint.",
+      "verify": "Fresh install → backend receives the token",
+      "auto": "push_token_sink"
+    },
+    {
+      "id": "RC-1",
+      "when": "remote_config",
+      "area": "Firebase",
+      "task": "Create the Remote Config keys",
+      "owner": "Product",
+      "blocker": false,
+      "why": "The app gate reads min_version_code (number) and maintenance_mode (boolean); missing keys fall back to the in-app defaults.",
+      "how": "Firebase → Remote Config → add min_version_code = 0 and maintenance_mode = false → Publish. Use conditions per app id for stage.",
+      "verify": "Set maintenance_mode=true → the app shows the maintenance screen after the next fetch",
+      "auto": null
+    },
+    {
+      "id": "DIST-1",
+      "when": "distribution",
+      "area": "CI",
+      "task": "Set up App Distribution",
+      "owner": "DevOps",
+      "blocker": false,
+      "why": "distribute.yml uploads stage builds with a service account.",
+      "how": "1. Create a service account with 'Firebase App Distribution Admin' → JSON key → GitHub secret FIREBASE_SERVICE_ACCOUNT_JSON.\n2. App Distribution → Testers & Groups → group 'testers'.",
+      "verify": "Push to main → testers get the new stage build",
+      "auto": null
+    },
+    {
+      "id": "DL-1",
+      "when": "deeplinks",
+      "area": "Deep links",
+      "task": "Publish assetlinks.json on every deep-link host",
+      "owner": "DevOps",
+      "blocker": true,
+      "why": "https App Links open the app only after Android verifies the domain (autoVerify).",
+      "how": "Serve https://<host>/.well-known/assetlinks.json listing {package} (and {stage_package} on the stage host) with the SHA-256 of the Play App Signing key (Play Console → App integrity).",
+      "verify": "adb shell pm get-app-links {package} shows 'verified'",
+      "auto": null
+    },
+    {
+      "id": "AUTH-1",
+      "when": "login",
+      "area": "Login",
+      "task": "Configure the login provider",
+      "owner": "Backend",
+      "blocker": true,
+      "why": "Sign-in needs the provider/console setup the app can't do (OAuth clients, SSO, OTP sender).",
+      "how": "Create OAuth/SSO clients for {package} and {stage_package} with the right SHA-1s; configure the OTP/SMS sender; document test accounts.",
+      "verify": "Sign in works on stage and prod builds",
+      "auto": null
+    },
+    {
+      "id": "AN-firebase",
+      "when": "analytics:firebase",
+      "area": "Analytics",
+      "task": "Firebase Analytics: check events and conversions",
+      "owner": "Product",
+      "blocker": false,
+      "why": "Events are sent once the real google-services.json is in place (FB-2).",
+      "how": "Firebase → Analytics → Events: mark key events as conversions; enable DebugView with adb shell setprop debug.firebase.analytics.app {package}.",
+      "verify": "DebugView shows the app's events",
+      "auto": null
+    },
+    {
+      "id": "AN-adjust",
+      "when": "analytics:adjust",
+      "area": "Analytics",
+      "task": "Adjust: app token and event tokens",
+      "owner": "Product",
+      "blocker": false,
+      "why": "Adjust stays off without the app token and only sends events that have a token (OBS-05).",
+      "how": "Adjust dashboard → create the app → set analytics.adjust.appToken and analytics.adjust.eventTokens=name:token,… in ~/.gradle/gradle.properties or CI.",
+      "verify": "Sandbox install appears in the Adjust testing console",
+      "auto": "key:analytics.adjust.appToken"
+    },
+    {
+      "id": "AN-appsflyer",
+      "when": "analytics:appsflyer",
+      "area": "Analytics",
+      "task": "AppsFlyer: dev key",
+      "owner": "Product",
+      "blocker": false,
+      "why": "AppsFlyer stays off without the dev key.",
+      "how": "AppsFlyer dashboard → App settings → Dev key → analytics.appsflyer.devKey.",
+      "verify": "SDK integration test in the AppsFlyer dashboard passes",
+      "auto": "key:analytics.appsflyer.devKey"
+    },
+    {
+      "id": "AN-mixpanel",
+      "when": "analytics:mixpanel",
+      "area": "Analytics",
+      "task": "Mixpanel: project token",
+      "owner": "Product",
+      "blocker": false,
+      "why": "Mixpanel stays off without the project token.",
+      "how": "Mixpanel → Project settings → Project token → analytics.mixpanel.token.",
+      "verify": "Events appear in Mixpanel → Events (live view)",
+      "auto": "key:analytics.mixpanel.token"
+    },
+    {
+      "id": "AN-amplitude",
+      "when": "analytics:amplitude",
+      "area": "Analytics",
+      "task": "Amplitude: API key",
+      "owner": "Product",
+      "blocker": false,
+      "why": "Amplitude stays off without the API key.",
+      "how": "Amplitude → Settings → Projects → API key → analytics.amplitude.apiKey.",
+      "verify": "Events appear in Amplitude → User lookup",
+      "auto": "key:analytics.amplitude.apiKey"
+    },
+    {
+      "id": "AN-segment",
+      "when": "analytics:segment",
+      "area": "Analytics",
+      "task": "Segment: write key and destinations",
+      "owner": "Product",
+      "blocker": false,
+      "why": "Segment stays off without the write key; it forwards only to destinations you enable.",
+      "how": "Segment → Sources → Android source → write key → analytics.segment.writeKey; enable destinations.",
+      "verify": "Source debugger shows the events",
+      "auto": "key:analytics.segment.writeKey"
+    },
+    {
+      "id": "AN-other",
+      "when": "analytics:other",
+      "area": "Analytics",
+      "task": "{provider}: keys and dashboard",
+      "owner": "Product",
+      "blocker": false,
+      "why": "The {provider} provider was written for a library the user named; it stays off until its keys are set.",
+      "how": "Create the app in the {provider} dashboard and set the keys read by {provider}AnalyticsProvider (see core/analytics/build.gradle.kts).",
+      "verify": "Events appear in the {provider} dashboard",
+      "auto": null
+    },
+    {
+      "id": "AN-consent",
+      "when": "analytics",
+      "area": "Analytics",
+      "task": "Decide on analytics consent",
+      "owner": "Product",
+      "blocker": false,
+      "why": "The composite starts enabled; markets with opt-in rules (e.g. GDPR) need consent first.",
+      "how": "If opt-in is required: call analyticsTracker.setEnabled(false) at startup and true after consent; list the SDKs in the privacy policy.",
+      "verify": "With consent off, no provider dashboard receives events",
+      "auto": null
+    },
+    {
+      "id": "DL-0",
+      "when": "always",
+      "area": "Deep links",
+      "task": "Choose the real deep-link hosts",
+      "owner": "Product",
+      "blocker": true,
+      "why": "stage.notes.example.com and notes.example.com are placeholders; App Links can't be verified on a domain you don't control.",
+      "how": "Pick the domains, then change deepLinkHost(...) for both flavors in app/build.gradle.kts and publish assetlinks.json there (DL-1).",
+      "verify": "adb shell am start -a android.intent.action.VIEW -d \"https://<host>/notes/1\" opens the note",
+      "auto": null
+    },
+    {
+      "id": "API-3",
+      "when": "always",
+      "area": "Backend",
+      "task": "Replace JSONPlaceholder with the real notes API",
+      "owner": "Backend",
+      "blocker": true,
+      "why": "JSONPlaceholder is a demo API: its write endpoints save nothing, so create/edit/delete stay on the device only and links use local ids.",
+      "how": "Agree on the notes API (list, create, update, delete), add the calls in :core:network, and sync LOCAL rows from OfflineFirstNotesRepository (WorkManager). Then carry server ids in deep links (SPEC Known exceptions).",
+      "verify": "A note created on one device appears on another after refresh",
+      "auto": null
+    },
+    {
+      "id": "FB-4",
+      "when": "always",
+      "area": "Firebase",
+      "task": "Turn on R8 mapping upload for Crashlytics",
+      "owner": "DevOps",
+      "blocker": false,
+      "why": "Mapping upload is off by default so builds work without a real Firebase project; without it release stack traces stay obfuscated.",
+      "how": "After FB-2, build releases with -Pcrashlytics.uploadMapping=true (add it to release.yml).",
+      "verify": "A test crash from a release build shows readable class names in Crashlytics",
+      "auto": null
+    },
+    {
+      "id": "PUSH-3",
+      "when": "always",
+      "area": "Push",
+      "task": "Decide how to handle a permanently denied notification permission",
+      "owner": "Product",
+      "blocker": false,
+      "why": "After a permanent denial the rationale card comes back on every start and 'Turn on' can't open the system dialog (audit issue, SPEC Known exceptions).",
+      "how": "Persist the answer (DataStore) and hide the card, or link to the app's notification settings instead.",
+      "verify": "Deny twice, restart: no card, or the button opens Settings",
+      "auto": null
+    }
+  ],
+  "secrets": [
+    {
+      "when": "always",
+      "name": "KEYSTORE_BASE64",
+      "what": "Base64 of the release/upload keystore",
+      "where": "GitHub secret",
+      "flavor": "prod",
+      "how": "base64 -i release.jks",
+      "read_by": ".github/workflows/release.yml"
+    },
+    {
+      "when": "always",
+      "name": "KEYSTORE_PASSWORD",
+      "what": "Keystore password",
+      "where": "GitHub secret",
+      "flavor": "prod",
+      "how": "Password manager (SIGN-1)",
+      "read_by": "app/build.gradle.kts (env)"
+    },
+    {
+      "when": "always",
+      "name": "KEY_ALIAS",
+      "what": "Key alias (e.g. upload)",
+      "where": "GitHub secret",
+      "flavor": "prod",
+      "how": "From SIGN-1",
+      "read_by": "app/build.gradle.kts (env)"
+    },
+    {
+      "when": "always",
+      "name": "KEY_PASSWORD",
+      "what": "Key password",
+      "where": "GitHub secret",
+      "flavor": "prod",
+      "how": "Password manager (SIGN-1)",
+      "read_by": "app/build.gradle.kts (env)"
+    },
+    {
+      "when": "always",
+      "name": "NVD_API_KEY",
+      "what": "NVD API key for OWASP dependency-check",
+      "where": "GitHub secret",
+      "flavor": "—",
+      "how": "nvd.nist.gov developer key",
+      "read_by": ".github/workflows/dependency-scan.yml"
+    },
+    {
+      "when": "api",
+      "name": "api.prod.baseUrl / api.stage.baseUrl",
+      "what": "API base URL per environment",
+      "where": "gradle.properties or ~/.gradle/gradle.properties or CI -P",
+      "flavor": "prod / stage",
+      "how": "Backend team",
+      "read_by": "app/build.gradle.kts → ApiConfig"
+    },
+    {
+      "when": "api",
+      "name": "api.prod.certPins / api.stage.certPins",
+      "what": "sha256/… pins (intermediate + root + backups)",
+      "where": "gradle.properties",
+      "flavor": "prod / stage",
+      "how": "SPEC.md → Hardening commands",
+      "read_by": "app/build.gradle.kts → ApiConfig → NetworkModule"
+    },
+    {
+      "when": "firebase",
+      "name": "google-services.json",
+      "what": "Firebase config for both app ids",
+      "where": "app/google-services.json (or CI secret written in the workflow)",
+      "flavor": "both",
+      "how": "Firebase → Project settings",
+      "read_by": "google-services Gradle plugin"
+    },
+    {
+      "when": "distribution",
+      "name": "FIREBASE_SERVICE_ACCOUNT_JSON",
+      "what": "Service account JSON (App Distribution Admin)",
+      "where": "GitHub secret",
+      "flavor": "stage",
+      "how": "Google Cloud console → IAM → service account key",
+      "read_by": ".github/workflows/distribute.yml"
+    },
+    {
+      "when": "analytics:adjust",
+      "name": "analytics.adjust.appToken / analytics.adjust.eventTokens",
+      "what": "Adjust app token; name:token pairs",
+      "where": "~/.gradle/gradle.properties or CI -P",
+      "flavor": "both",
+      "how": "Adjust dashboard",
+      "read_by": "core/analytics BuildConfig"
+    },
+    {
+      "when": "analytics:appsflyer",
+      "name": "analytics.appsflyer.devKey",
+      "what": "AppsFlyer dev key",
+      "where": "~/.gradle/gradle.properties or CI -P",
+      "flavor": "both",
+      "how": "AppsFlyer dashboard",
+      "read_by": "core/analytics BuildConfig"
+    },
+    {
+      "when": "analytics:mixpanel",
+      "name": "analytics.mixpanel.token",
+      "what": "Mixpanel project token",
+      "where": "~/.gradle/gradle.properties or CI -P",
+      "flavor": "both",
+      "how": "Mixpanel project settings",
+      "read_by": "core/analytics BuildConfig"
+    },
+    {
+      "when": "analytics:amplitude",
+      "name": "analytics.amplitude.apiKey",
+      "what": "Amplitude API key",
+      "where": "~/.gradle/gradle.properties or CI -P",
+      "flavor": "both",
+      "how": "Amplitude project settings",
+      "read_by": "core/analytics BuildConfig"
+    },
+    {
+      "when": "analytics:segment",
+      "name": "analytics.segment.writeKey",
+      "what": "Segment write key",
+      "where": "~/.gradle/gradle.properties or CI -P",
+      "flavor": "both",
+      "how": "Segment source settings",
+      "read_by": "core/analytics BuildConfig"
+    }
+  ],
+  "external": [
+    {
+      "when": "always",
+      "service": "GitHub",
+      "setup": "Secrets (see Secrets & keys) and branch protection on main",
+      "ref": "SIGN-2, CI-1, CI-2"
+    },
+    {
+      "when": "always",
+      "service": "Google Play Console",
+      "setup": "App {package}, store listing, content rating, target audience, privacy policy, Data safety, Play App Signing, internal testing track",
+      "ref": "STORE-2, STORE-3"
+    },
+    {
+      "when": "firebase",
+      "service": "Firebase",
+      "setup": "Project with apps {package} and {stage_package}; SHA fingerprints; download google-services.json",
+      "ref": "FB-1, FB-2"
+    },
+    {
+      "when": "crashlytics",
+      "service": "Firebase Crashlytics",
+      "setup": "Enable; first test crash",
+      "ref": "FB-3"
+    },
+    {
+      "when": "remote_config",
+      "service": "Firebase Remote Config",
+      "setup": "Keys min_version_code (number), maintenance_mode (boolean); publish",
+      "ref": "RC-1"
+    },
+    {
+      "when": "push",
+      "service": "Firebase Cloud Messaging",
+      "setup": "Service account for the backend sender (HTTP v1); test message",
+      "ref": "PUSH-1"
+    },
+    {
+      "when": "distribution",
+      "service": "Firebase App Distribution",
+      "setup": "Tester group 'testers'; service account for CI",
+      "ref": "DIST-1"
+    },
+    {
+      "when": "deeplinks",
+      "service": "Web hosts ({hosts})",
+      "setup": "/.well-known/assetlinks.json with the Play App Signing SHA-256",
+      "ref": "DL-1"
+    },
+    {
+      "when": "analytics:adjust",
+      "service": "Adjust",
+      "setup": "App + event tokens",
+      "ref": "AN-adjust"
+    },
+    {
+      "when": "analytics:appsflyer",
+      "service": "AppsFlyer",
+      "setup": "App + dev key",
+      "ref": "AN-appsflyer"
+    },
+    {
+      "when": "analytics:mixpanel",
+      "service": "Mixpanel",
+      "setup": "Project + token",
+      "ref": "AN-mixpanel"
+    },
+    {
+      "when": "analytics:amplitude",
+      "service": "Amplitude",
+      "setup": "Project + API key",
+      "ref": "AN-amplitude"
+    },
+    {
+      "when": "analytics:segment",
+      "service": "Segment",
+      "setup": "Android source + destinations",
+      "ref": "AN-segment"
+    },
+    {
+      "when": "login",
+      "service": "Login provider",
+      "setup": "OAuth/SSO clients for both app ids; OTP sender",
+      "ref": "AUTH-1"
+    }
+  ],
+  "verify": [
+    {
+      "when": "always",
+      "check": "Quality gate",
+      "command": "python3 tools/check_rules.py . && ./gradlew assembleDebug detekt ktlintCheck lint testDebugUnitTest testStageDebugUnitTest koverVerify"
+    },
+    {
+      "when": "always",
+      "check": "Release build (R8)",
+      "command": "./gradlew :app:bundleProdRelease  (signed when KEYSTORE_* are set)"
+    },
+    {
+      "when": "always",
+      "check": "Stage app on a device",
+      "command": "./gradlew :app:installStageDebug"
+    },
+    {
+      "when": "always",
+      "check": "Refresh this checklist",
+      "command": "python3 tools/handover_check.py"
+    },
+    {
+      "when": "deeplinks",
+      "check": "Deep link opens the right screen",
+      "command": "adb shell am start -a android.intent.action.VIEW -d \"https://{prod_host}/...\" {package}"
+    },
+    {
+      "when": "deeplinks",
+      "check": "App Links verified",
+      "command": "adb shell pm get-app-links {package}"
+    },
+    {
+      "when": "push",
+      "check": "Push received",
+      "command": "Firebase console → Messaging → Send test message (device token from logcat in debug)"
+    },
+    {
+      "when": "analytics:firebase",
+      "check": "Analytics events",
+      "command": "adb shell setprop debug.firebase.analytics.app {package}  → Firebase DebugView"
+    }
+  ]
+}
