@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared texts. Keys are prefixed "common_". Translate every key in each values-<lang>/strings_common.xml. -->
+<resources>
+    <string name="common_app_name" translatable="false">Notes v2</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_loading">Loading</string>
+    <string name="common_error_network">No internet connection. Check your connection and try again.</string>
+    <string name="common_error_server">Something went wrong on our side. Please try again.</string>
+    <string name="common_error_unknown">Something went wrong. Please try again.</string>
+</resources>

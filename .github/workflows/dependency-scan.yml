@@ -1,0 +1,28 @@
+# Dependency vulnerability scan (HARD-08, CI-03). Secret: NVD_API_KEY (free key from nvd.nist.gov).
+name: Dependency scan
+
+on:
+  pull_request:
+    paths: ['gradle/libs.versions.toml', '**/build.gradle.kts']
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  owasp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: OWASP dependency-check
+        run: ./gradlew dependencyCheckAggregate -PnvdApiKey=${{ secrets.NVD_API_KEY }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: build/reports/dependency-check-report.*

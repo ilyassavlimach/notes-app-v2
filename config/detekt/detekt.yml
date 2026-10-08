@@ -1,0 +1,165 @@
+# detekt config for android-app-builder projects (builds upon the default config).
+# Rule IDs in comments map to the skill's references/rules/*.md.
+
+config:
+  validation: true
+  excludes: 'Compose>.*'
+
+complexity:
+  LongMethod:                       # CORE-01
+    threshold: 40
+    ignoreAnnotated: ['Preview', 'PreviewLightDark', 'PreviewFontScale', 'PreviewScreenSizes']
+  LargeClass:                       # CORE-02 (file length is checked by check_rules.py)
+    threshold: 300
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 8
+    ignoreDefaultParameters: true
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    thresholdInFiles: 15
+    thresholdInClasses: 15
+    ignorePrivate: true
+    ignoreAnnotatedFunctions: ['Preview', 'PreviewLightDark', 'Composable']
+  CyclomaticComplexMethod:
+    threshold: 12
+    ignoreSimpleWhenEntries: true
+
+style:
+  MagicNumber:                      # CORE-04
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    ignoreAnnotated: ['Preview', 'PreviewLightDark']
+    excludes: ['**/test/**', '**/androidTest/**', '**/designsystem/**']
+  UnusedPrivateMember:              # DEAD-01
+    active: true
+    ignoreAnnotated: ['Preview', 'PreviewLightDark', 'PreviewFontScale', 'PreviewScreenSizes']
+  UnusedPrivateProperty:
+    active: true
+  UnusedParameter:
+    active: true
+  ForbiddenComment:                 # CORE-09
+    active: true
+    comments:
+      - value: 'TODO'
+        reason: 'No TODOs in delivered code — finish it or track it in docs/TASKS.md.'
+      - value: 'FIXME'
+        reason: 'No FIXMEs in delivered code.'
+      - value: 'HACK'
+        reason: 'No HACKs in delivered code.'
+  ForbiddenImport:                  # SEC-06, CONC-02, DEPR-01
+    active: true
+    imports:
+      - value: 'android.util.Log'
+        reason: 'Use the debug-only logger from :core:common.'
+      - value: 'kotlinx.coroutines.GlobalScope'
+        reason: 'Use viewModelScope or an injected scope.'
+      - value: 'android.os.AsyncTask'
+        reason: 'Deprecated.'
+      - value: 'android.preference.PreferenceManager'
+        reason: 'Use DataStore.'
+  WildcardImport:
+    active: true
+  MaxLineLength:
+    maxLineLength: 120
+    excludeCommentStatements: true
+  ReturnCount:
+    max: 3
+    excludeGuardClauses: true
+  UnnecessaryAbstractClass:
+    active: true
+  UseCheckOrError:
+    active: true
+  UnusedImports:
+    active: true
+
+naming:
+  MatchingDeclarationName:
+    excludes: ['**/navigation/**']  # XDestination + NavGraphBuilder.xScreen() live together
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+potential-bugs:
+  UnsafeCallOnNullableType:         # CORE-06
+    active: true
+  LateinitUsage:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+    ignoreOnClassesPattern: '.*(Activity|Application|Service|Test)$' # Hilt field injection in Android entry points
+
+exceptions:
+  TooGenericExceptionCaught:        # ERR-05
+    active: true
+  SwallowedException:               # ERR-02 — mapping to a typed AppError is not swallowing
+    active: true
+    ignoredExceptionTypes:
+      - 'IOException'
+      - 'HttpException'
+      - 'SerializationException'
+      - 'SSLPeerUnverifiedException'
+      - 'SQLException'
+      - 'FirebaseException'
+      - 'FirebaseNetworkException'
+      - 'InterruptedException'
+      - 'NumberFormatException'
+      - 'ParseException'
+      - 'MalformedURLException'
+
+coroutines:
+  GlobalCoroutineUsage:             # CONC-02
+    active: true
+  InjectDispatcher:                 # CONC-01
+    active: true
+    excludes: ['**/di/**', '**/test/**', '**/androidTest/**', '**/testing/**']
+  RedundantSuspendModifier:
+    active: true
+  SleepInsteadOfDelay:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+Compose:
+  ComposableParamOrder:
+    active: true
+  CompositionLocalAllowlist:
+    active: true
+    allowedCompositionLocals: 'LocalNotesV2Spacing'
+  ContentEmitterReturningValues:
+    active: true
+  DefaultsVisibility:
+    active: true
+  LambdaParameterInRestartableEffect:
+    active: true
+  ModifierClickableOrder:
+    active: true
+  ModifierComposable:
+    active: true
+  ModifierMissing:
+    active: true
+  ModifierNaming:
+    active: true
+  ModifierNotUsedAtRoot:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierWithoutDefault:
+    active: true
+  MultipleEmitters:
+    active: true
+  MutableParams:
+    active: true
+  MutableStateParam:
+    active: true
+  PreviewPublic:
+    active: true
+  RememberMissing:
+    active: true
+  UnstableCollections:
+    active: true
+  ViewModelForwarding:
+    active: true
+  ViewModelInjection:
+    active: true

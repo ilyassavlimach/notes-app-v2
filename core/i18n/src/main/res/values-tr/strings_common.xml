@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_retry">Tekrar dene</string>
+    <string name="common_loading">Yükleniyor</string>
+    <string name="common_error_network">İnternet bağlantısı yok. Bağlantını kontrol edip tekrar dene.</string>
+    <string name="common_error_server">Bizim tarafımızda bir sorun oluştu. Lütfen tekrar dene.</string>
+    <string name="common_error_unknown">Bir şeyler ters gitti. Lütfen tekrar dene.</string>
+</resources>
