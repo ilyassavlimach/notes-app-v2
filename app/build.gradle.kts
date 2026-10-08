@@ -83,6 +83,7 @@ dependencies {
     implementation(projects.core.common)
     implementation(projects.core.designsystem)
     implementation(projects.core.i18n)
+    implementation(projects.core.config)
     implementation(projects.core.notifications) // merges the FCM service and channel initializer into the manifest
     implementation(projects.feature.notedetail)
     implementation(projects.feature.noteeditor)
@@ -94,6 +95,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     implementation(libs.timber)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
 
@@ -101,6 +104,7 @@ dependencies {
     debugImplementation(libs.leakcanary)
 
     testImplementation(libs.junit4)
+    testImplementation(projects.core.testing)
     testImplementation(libs.kotlin.test)
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.robolectric)

@@ -51,8 +51,8 @@
 - [x] noteeditor-10 Strings (en, tr)                                   gate: core/i18n
 - [x] noteeditor-done Rule of two, full gate + dead code + auto-commit
 ### app gate (remote config)
-- [ ] config-1 :core:config rendered, strings tr, AppGateViewModel + tests, NotesV2App shows AppGateScreen   gate: core/config app
-- [ ] config-done Full gate + dead code + auto-commit
+- [x] config-1 :core:config rendered, strings tr, AppGateViewModel + tests, NotesV2App shows AppGateScreen   gate: core/config app
+- [x] config-done Full gate + dead code + auto-commit
 
 ## Stage E — hardening & handover
 - [ ] E1 Hardening (pins for jsonplaceholder.typicode.com from the live chain + backup roots)

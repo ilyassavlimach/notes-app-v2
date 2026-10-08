@@ -28,6 +28,7 @@ rootProject.name = "notes-app-v2"
 include(":app")
 include(":core:analytics")
 include(":core:common")
+include(":core:config")
 include(":core:data")
 include(":core:database")
 include(":core:designsystem")

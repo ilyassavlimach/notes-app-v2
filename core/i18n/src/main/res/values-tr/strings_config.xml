@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_update_title">Güncelleme gerekli</string>
+    <string name="config_update_message">Bu sürüm artık desteklenmiyor. Devam etmek için lütfen güncelle.</string>
+    <string name="config_update_action">Güncelle</string>
+    <string name="config_maintenance_title">Bakımdayız</string>
+    <string name="config_maintenance_message">Kısa bir bakım yapıyoruz. Lütfen birazdan tekrar dene.</string>
+</resources>

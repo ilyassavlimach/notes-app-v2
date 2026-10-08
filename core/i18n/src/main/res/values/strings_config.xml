@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Translate into every values-<lang>/strings_config.xml (I18N-04). -->
+<resources>
+    <string name="config_update_title">Update required</string>
+    <string name="config_update_message">This version is no longer supported. Please update to continue.</string>
+    <string name="config_update_action">Update</string>
+    <string name="config_maintenance_title">Under maintenance</string>
+    <string name="config_maintenance_message">We\'re doing some maintenance. Please try again soon.</string>
+</resources>
