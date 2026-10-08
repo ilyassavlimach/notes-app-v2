@@ -9,4 +9,6 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.i18n)
     implementation(projects.core.model)
+
+    testImplementation(projects.core.testing)
 }

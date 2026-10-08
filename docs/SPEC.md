@@ -94,7 +94,7 @@ English and Turkish.
   noteeditor_keep_editing, common_close (strings_common).
 
 ## Data
-- Models: `Note(id: Long, title: String, body: String, updatedAt: Instant)`.
+- Models: `Note(id: Long, title: String, body: String)` (ordering is done by Room, so the UI needs no timestamp).
 - API: GET /posts → `List<NoteDto(userId, id, title, body)>` (no auth). JSONPlaceholder's write endpoints don't
   save anything, so create/edit/delete stay local; no write calls are made.
 - Local: Room `NoteEntity(id PK autoGenerate, remoteId: Long? unique index, title, body, updatedAt: Long,
@@ -108,7 +108,7 @@ English and Turkish.
   - `NoteDao`: observeVisible, observeById, insert, update, setDeleted, findByRemoteIds, upsertSynced,
     deleteSyncedNotIn, `@Transaction` mergeRemote. Schema exported (v1).
   - DataStore: none.
-- Time: an injected `kotlin.time.Clock` (`:core:common`), faked in tests.
+- Time: an injected `java.time.Clock` (`:core:common`), fixed in tests.
 - Repository: `NotesRepository`
   - `observeNotes(): Flow<List<Note>>` · `observeNote(id): Flow<Note?>`
   - `refresh(): Result<Unit>` · `createNote(title, body): Result<Long>` · `updateNote(id, title, body): Result<Unit>`
@@ -168,4 +168,5 @@ Sensitive-app defaults (SEC-07): no.
 (filled in Stage C if anything is held back)
 
 ## Known exceptions
-(filled in during the run)
+- noteslist and notedetail are one commit: with only the list screen, the app template's `navigateTo` has no
+  caller and the dead-code gate can't pass, so the first feature waited for the second (skill lesson).

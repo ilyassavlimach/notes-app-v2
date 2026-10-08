@@ -5,4 +5,6 @@
     <string name="common_error_network">İnternet bağlantısı yok. Bağlantını kontrol edip tekrar dene.</string>
     <string name="common_error_server">Bizim tarafımızda bir sorun oluştu. Lütfen tekrar dene.</string>
     <string name="common_error_unknown">Bir şeyler ters gitti. Lütfen tekrar dene.</string>
+    <string name="common_back">Geri</string>
+    <string name="common_cancel">Vazgeç</string>
 </resources>

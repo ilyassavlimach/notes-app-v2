@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="noteslist_title">Notes</string>
+    <string name="noteslist_empty">There are no notes yet. Pull down to refresh.</string>
+    <string name="noteslist_refresh_failed">Couldn\'t refresh. Showing saved notes.</string>
+    <string name="noteslist_note_deleted">Note deleted</string>
+    <string name="noteslist_undo">Undo</string>
+</resources>

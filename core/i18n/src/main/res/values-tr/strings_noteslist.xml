@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="noteslist_title">Notlar</string>
+    <string name="noteslist_empty">Henüz not yok. Yenilemek için aşağı çekin.</string>
+    <string name="noteslist_refresh_failed">Yenilenemedi. Kayıtlı notlar gösteriliyor.</string>
+    <string name="noteslist_note_deleted">Not silindi</string>
+    <string name="noteslist_undo">Geri al</string>
+</resources>

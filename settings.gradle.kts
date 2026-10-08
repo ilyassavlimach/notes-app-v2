@@ -25,6 +25,8 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "notes-app-v2"
 
 // Modules — keep sorted; android-app-builder adds a line per module it creates.
+include(":app")
+include(":core:analytics")
 include(":core:common")
 include(":core:data")
 include(":core:database")
@@ -34,3 +36,5 @@ include(":core:model")
 include(":core:network")
 include(":core:testing")
 include(":core:ui")
+include(":feature:notedetail")
+include(":feature:noteslist")

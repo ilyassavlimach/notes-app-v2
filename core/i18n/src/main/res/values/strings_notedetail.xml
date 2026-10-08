@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notedetail_title">Note</string>
+    <string name="notedetail_not_found">This note isn\'t available anymore.</string>
+    <string name="notedetail_delete">Delete</string>
+    <string name="notedetail_delete_confirm_title">Delete this note?</string>
+    <string name="notedetail_delete_confirm_body">You can undo this from the notes list.</string>
+    <string name="notedetail_delete_failed">Couldn\'t delete the note. Please try again.</string>
+</resources>

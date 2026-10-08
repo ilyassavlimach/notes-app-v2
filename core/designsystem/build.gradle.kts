@@ -3,3 +3,7 @@ plugins {
     id("app.android.library")
     id("app.android.compose")
 }
+
+dependencies {
+    api(libs.androidx.compose.material.icons.core)
+}
