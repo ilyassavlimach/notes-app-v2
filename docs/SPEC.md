@@ -170,3 +170,11 @@ Sensitive-app defaults (SEC-07): no.
 ## Known exceptions
 - noteslist and notedetail are one commit: with only the list screen, the app template's `navigateTo` has no
   caller and the dead-code gate can't pass, so the first feature waited for the second (skill lesson).
+- Code review (E4), skipped on purpose:
+  - Notification rationale after a *permanent* denial: the card comes back on the next app start and "Turn on"
+    then does nothing, because telling "never asked" from "permanently denied" needs a stored flag (DataStore),
+    which the app doesn't have. Next step: persist the answer, or open the app's notification settings instead.
+  - Deep links use the local Room id (`/notes/{id}`). Right for links the app builds itself; once a backend sends
+    links, they should carry the server id and resolve it through `remoteId`.
+- Build: `gradle/gradle-daemon-jvm.properties` (written by Android Studio) asked for a Java 25 daemon; detekt 1.x
+  can't run on it, so it requires Java 17. Keep it at 17 until detekt 2 is used.

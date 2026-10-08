@@ -1,8 +1,10 @@
 package com.machinarium.notesv2.core.testing.repository
 
+import com.machinarium.notesv2.core.common.result.AppError
 import com.machinarium.notesv2.core.common.result.AppResult
 import com.machinarium.notesv2.core.data.repository.NotesRepository
 import com.machinarium.notesv2.core.model.Note
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +36,9 @@ class FakeNotesRepository : NotesRepository {
 
     val hasUserNotes = MutableStateFlow(false)
 
+    /** When set, createNote / updateNote wait for it, so tests can act while a save is in flight. */
+    var saveGate: CompletableDeferred<Unit>? = null
+
     fun emit(value: List<Note>) {
         notes.value = value
     }
@@ -51,6 +56,7 @@ class FakeNotesRepository : NotesRepository {
         title: String,
         body: String,
     ): AppResult<Long> {
+        saveGate?.await()
         saveFailure?.let { return it }
         val id = (notes.value.maxOfOrNull(Note::id) ?: 0) + 1
         notes.value = listOf(Note(id = id, title = title, body = body)) + notes.value
@@ -62,6 +68,7 @@ class FakeNotesRepository : NotesRepository {
         title: String,
         body: String,
     ): AppResult<Unit> {
+        saveGate?.await()
         saveFailure?.let { return it }
         notes.value = notes.value.map { if (it.id == id) it.copy(title = title, body = body) else it }
         return AppResult.Success(Unit)
@@ -74,7 +81,8 @@ class FakeNotesRepository : NotesRepository {
 
     override suspend fun deleteNote(id: Long): AppResult<Unit> {
         writeFailure?.let { return it }
-        val note = notes.value.firstOrNull { it.id == id } ?: return AppResult.Success(Unit)
+        // Like the real repository: a missing note is a failure, not a silent success.
+        val note = notes.value.firstOrNull { it.id == id } ?: return AppResult.Failure(AppError.Unknown)
         deletedNotes[id] = note
         notes.value = notes.value - note
         recentlyDeletedId.value = id

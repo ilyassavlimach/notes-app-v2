@@ -24,6 +24,7 @@ internal fun NotesListRoute(
         onAddNoteClick = onAddNoteClick,
         onRefresh = viewModel::onRefresh,
         onRefreshErrorShown = viewModel::onRefreshErrorShown,
+        onRestoreErrorShown = viewModel::onRestoreErrorShown,
         onUndoDelete = viewModel::onUndoDelete,
         onUndoOffered = viewModel::onUndoOffered,
         onAllowNotificationsClick = notificationPermission::request,

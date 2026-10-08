@@ -12,13 +12,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.machinarium.notesv2.core.common.result.AppError
 import com.machinarium.notesv2.core.designsystem.components.NotesV2AlertDialog
 import com.machinarium.notesv2.core.designsystem.components.NotesV2TextButton
 import com.machinarium.notesv2.core.designsystem.components.NotesV2TextField
@@ -28,10 +26,12 @@ import com.machinarium.notesv2.core.designsystem.theme.NotesV2Theme
 import com.machinarium.notesv2.core.i18n.R
 import com.machinarium.notesv2.core.ui.EmptyState
 import com.machinarium.notesv2.core.ui.LoadingState
+import com.machinarium.notesv2.core.ui.SnackbarMessageEffect
 
 @Composable
 internal fun NoteEditorScreen(
     uiState: NoteEditorUiState,
+    isNewNote: Boolean,
     onTitleChange: (String) -> Unit,
     onBodyChange: (String) -> Unit,
     onSaveClick: () -> Unit,
@@ -43,11 +43,16 @@ internal fun NoteEditorScreen(
 ) {
     val editing = uiState as? NoteEditorUiState.Editing
     val snackbarHostState = remember { SnackbarHostState() }
-    SaveErrorEffect(editing?.saveError, snackbarHostState, onSaveErrorShown)
+    SnackbarMessageEffect(
+        trigger = editing?.saveError,
+        message = stringResource(R.string.noteeditor_save_failed),
+        snackbarHostState = snackbarHostState,
+        onShown = onSaveErrorShown,
+    )
 
     Scaffold(
         modifier = modifier,
-        topBar = { NoteEditorTopAppBar(editing, onCloseClick, onSaveClick) },
+        topBar = { NoteEditorTopAppBar(isNewNote, editing, onCloseClick, onSaveClick) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         val contentModifier = Modifier
@@ -71,11 +76,13 @@ internal fun NoteEditorScreen(
 
 @Composable
 private fun NoteEditorTopAppBar(
+    isNewNote: Boolean,
     editing: NoteEditorUiState.Editing?,
     onCloseClick: () -> Unit,
     onSaveClick: () -> Unit,
 ) {
-    val titleRes = if (editing?.isNewNote == false) R.string.noteeditor_title_edit else R.string.noteeditor_title_new
+    // From the key, not the state: the title is right while the note loads and when it is missing.
+    val titleRes = if (isNewNote) R.string.noteeditor_title_new else R.string.noteeditor_title_edit
     NotesV2TopAppBar(
         title = stringResource(titleRes),
         navigationIcon = NotesV2Icons.Close,
@@ -156,29 +163,13 @@ private fun DiscardDialog(
     )
 }
 
-@Composable
-private fun SaveErrorEffect(
-    error: AppError?,
-    snackbarHostState: SnackbarHostState,
-    onShown: () -> Unit,
-) {
-    error ?: return
-    val message = stringResource(R.string.noteeditor_save_failed)
-    LaunchedEffect(error) {
-        try {
-            snackbarHostState.showSnackbar(message)
-        } finally {
-            onShown() // COMP-08: also when the screen leaves mid-snackbar
-        }
-    }
-}
-
 @PreviewLightDark
 @Composable
 private fun NoteEditorScreenEditingPreview() {
     NotesV2Theme {
         NoteEditorScreen(
             uiState = PreviewEditing,
+            isNewNote = false,
             onTitleChange = {},
             onBodyChange = {},
             onSaveClick = {},
@@ -196,6 +187,7 @@ private fun NoteEditorScreenErrorPreview() {
     NotesV2Theme {
         NoteEditorScreen(
             uiState = PreviewEditing.copy(title = "", titleError = FieldError.Required, canSave = false),
+            isNewNote = false,
             onTitleChange = {},
             onBodyChange = {},
             onSaveClick = {},

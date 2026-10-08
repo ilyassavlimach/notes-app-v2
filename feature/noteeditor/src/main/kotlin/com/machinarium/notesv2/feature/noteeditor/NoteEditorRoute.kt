@@ -30,6 +30,7 @@ internal fun NoteEditorRoute(
 
     NoteEditorScreen(
         uiState = uiState,
+        isNewNote = noteId == null,
         onTitleChange = viewModel::onTitleChange,
         onBodyChange = viewModel::onBodyChange,
         onSaveClick = viewModel::onSaveClick,

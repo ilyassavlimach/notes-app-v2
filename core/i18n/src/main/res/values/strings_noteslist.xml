@@ -9,4 +9,5 @@
     <string name="noteslist_notifications_rationale">Turn on notifications to get reminders and updates about your notes.</string>
     <string name="noteslist_notifications_allow">Turn on</string>
     <string name="noteslist_notifications_not_now">Not now</string>
+    <string name="noteslist_undo_failed">Couldn\'t restore the note.</string>
 </resources>

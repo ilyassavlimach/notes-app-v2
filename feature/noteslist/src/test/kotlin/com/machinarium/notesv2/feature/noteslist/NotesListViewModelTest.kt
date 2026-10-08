@@ -168,7 +168,11 @@ class NotesListViewModelTest {
 
         viewModel.onUndoDelete(otherNote.id)
 
-        assertEquals(AppError.Unknown, assertIs<NotesListUiState.Content>(viewModel.uiState.value).refreshError)
+        val state = assertIs<NotesListUiState.Content>(viewModel.uiState.value)
+        assertEquals(true to null, state.isRestoreFailed to state.refreshError)
+
+        viewModel.onRestoreErrorShown()
+        assertEquals(false, assertIs<NotesListUiState.Content>(viewModel.uiState.value).isRestoreFailed)
     }
 
     @Test

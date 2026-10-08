@@ -132,6 +132,7 @@ class NotesListScreenTest {
                     onAddNoteClick = {},
                     onRefresh = {},
                     onRefreshErrorShown = {},
+                    onRestoreErrorShown = {},
                     onUndoDelete = {},
                     onUndoOffered = {},
                     onAllowNotificationsClick = {},
@@ -144,6 +145,19 @@ class NotesListScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText(newNote.title).assertIsDisplayed()
+    }
+
+    @Test
+    fun restoreFailed_showsUndoFailedMessage_andReportsShown() { // regression: said "couldn't refresh"
+        var shown = 0
+        setScreen(content().copy(isRestoreFailed = true), onRestoreErrorShown = { shown++ })
+
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_undo_failed)).assertIsDisplayed()
+        composeRule.onNodeWithText(stringResource(R.string.noteslist_refresh_failed)).assertDoesNotExist()
+        composeRule.mainClock.advanceTimeBy(SNACKBAR_TIMEOUT_MILLIS)
+        composeRule.waitForIdle()
+
+        assertEquals(1, shown)
     }
 
     @Test
@@ -202,6 +216,7 @@ class NotesListScreenTest {
         onNoteClick: (Long) -> Unit = {},
         onRefresh: () -> Unit = {},
         onRefreshErrorShown: () -> Unit = {},
+        onRestoreErrorShown: () -> Unit = {},
         onUndoDelete: (Long) -> Unit = {},
         onUndoOffered: () -> Unit = {},
     ) {
@@ -214,6 +229,7 @@ class NotesListScreenTest {
                     onAddNoteClick = onAddNoteClick,
                     onRefresh = onRefresh,
                     onRefreshErrorShown = onRefreshErrorShown,
+                    onRestoreErrorShown = onRestoreErrorShown,
                     onUndoDelete = onUndoDelete,
                     onUndoOffered = onUndoOffered,
                     onAllowNotificationsClick = onAllowNotificationsClick,

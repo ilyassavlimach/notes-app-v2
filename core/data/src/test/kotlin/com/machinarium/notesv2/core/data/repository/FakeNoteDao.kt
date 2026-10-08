@@ -73,9 +73,7 @@ internal class FakeNoteDao : NoteDao {
         }
     }
 
-    override suspend fun deleteSyncedNotIn(remoteIds: List<Long>) {
-        rows.update { current ->
-            current.filterNot { it.syncState == SyncState.SYNCED && !it.isDeleted && it.remoteId !in remoteIds }
-        }
+    override suspend fun deleteByIds(ids: List<Long>) {
+        rows.update { current -> current.filterNot { it.id in ids } }
     }
 }

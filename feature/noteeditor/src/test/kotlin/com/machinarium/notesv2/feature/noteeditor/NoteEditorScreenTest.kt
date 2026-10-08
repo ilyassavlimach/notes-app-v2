@@ -94,11 +94,22 @@ class NoteEditorScreenTest {
         composeRule.onNode(hasContentDescription(stringResource(R.string.common_loading))).assertIsDisplayed()
     }
 
-    private fun setScreen(state: NoteEditorUiState) {
+    @Test
+    fun editLoadingAndNotFound_showEditTitle() { // regression: showed "New note" while an edit loaded
+        setScreen(NoteEditorUiState.Loading, isNewNote = false)
+
+        composeRule.onNodeWithText(stringResource(R.string.noteeditor_title_edit)).assertIsDisplayed()
+    }
+
+    private fun setScreen(
+        state: NoteEditorUiState,
+        isNewNote: Boolean = (state as? NoteEditorUiState.Editing)?.isNewNote ?: true,
+    ) {
         composeRule.setContent {
             NotesV2Theme {
                 NoteEditorScreen(
                     uiState = state,
+                    isNewNote = isNewNote,
                     onTitleChange = { calls += "title:$it" },
                     onBodyChange = { calls += "body:$it" },
                     onSaveClick = { calls += "save" },

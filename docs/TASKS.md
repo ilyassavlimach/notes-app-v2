@@ -59,7 +59,7 @@
 - [x] E2 assembleProdRelease (R8)
 - [x] E2b Release smoke test on an emulator (list, create, edit, delete/undo, detail, offline, tr, deep link)
 - [x] E3 Final gate (GATE_FINAL=1)
-- [ ] E4 /code-review (high), fix findings with regression tests
+- [x] E4 /code-review (high), fix findings with regression tests
 - [ ] E5 mobile-codebase-audit → docs/audit/ (≥ 80, every category ≥ 8)
 - [ ] E6 Audit fix loop (max 2)
 - [ ] E7 Handover checklist → docs/HANDOVER.xlsx

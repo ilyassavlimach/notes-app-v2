@@ -30,6 +30,7 @@ internal class NotesListViewModel @Inject constructor(
 
     private val isRefreshing = MutableStateFlow(false)
     private val refreshError = MutableStateFlow<AppError?>(null)
+    private val isRestoreFailed = MutableStateFlow(false)
     private val observeAttempt = MutableStateFlow(0)
 
     // Each refresh re-subscribes to the cache, so a failed observation can recover through Retry.
@@ -44,12 +45,12 @@ internal class NotesListViewModel @Inject constructor(
         isRefreshing,
         refreshError,
         notesRepository.recentlyDeleted,
-        notesRepository.observeHasUserNotes().catch { emit(false) },
-    ) { notes, refreshing, error, undoNoteId, hasUserNotes ->
+        combine(notesRepository.observeHasUserNotes().catch { emit(false) }, isRestoreFailed, ::Pair),
+    ) { notes, refreshing, error, undoNoteId, (hasUserNotes, restoreFailed) ->
         if (notes == null) {
             NotesListUiState.Error(AppError.Unknown)
         } else {
-            toUiState(notes, refreshing, error, undoNoteId).withNotificationAsk(hasUserNotes)
+            toUiState(notes, refreshing, error, undoNoteId).withContentFlags(hasUserNotes, restoreFailed)
         }
     }
         .stateIn(
@@ -79,8 +80,12 @@ internal class NotesListViewModel @Inject constructor(
 
     fun onUndoDelete(noteId: Long) {
         viewModelScope.launch {
-            if (notesRepository.restoreNote(noteId) is AppResult.Failure) refreshError.value = AppError.Unknown
+            if (notesRepository.restoreNote(noteId) is AppResult.Failure) isRestoreFailed.value = true
         }
+    }
+
+    fun onRestoreErrorShown() {
+        isRestoreFailed.value = false
     }
 
     /** The Undo snackbar was shown (and acted on or dismissed), so it isn't offered again. */
@@ -107,8 +112,14 @@ internal class NotesListViewModel @Inject constructor(
         else -> NotesListUiState.Empty()
     }
 
-    private fun NotesListUiState.withNotificationAsk(hasUserNotes: Boolean): NotesListUiState =
-        if (this is NotesListUiState.Content) copy(canAskForNotifications = hasUserNotes) else this
+    private fun NotesListUiState.withContentFlags(
+        hasUserNotes: Boolean,
+        restoreFailed: Boolean,
+    ): NotesListUiState = if (this is NotesListUiState.Content) {
+        copy(canAskForNotifications = hasUserNotes, isRestoreFailed = restoreFailed)
+    } else {
+        this
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

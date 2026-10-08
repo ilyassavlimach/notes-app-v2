@@ -11,6 +11,7 @@ import com.machinarium.notesv2.core.testing.repository.FakeNotesRepository
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -60,6 +61,21 @@ class NoteEditorViewModelTest {
         assertEquals(NoteEditorUiState.Closed, viewModel.uiState.value)
         assertEquals(listOf(Note(id = 1, title = "Groceries", body = "Milk")), repository.observeNotes().first())
         assertEquals(listOf(AnalyticsEvent("note_created", mapOf("note_id" to "1"))), analytics.events)
+    }
+
+    @Test
+    fun `when save is tapped twice while saving, then the note is created once`() = runTest {
+        // regression
+        repository.saveGate = CompletableDeferred()
+        val viewModel = createViewModel()
+        viewModel.onTitleChange("Groceries")
+
+        viewModel.onSaveClick()
+        viewModel.onSaveClick()
+        repository.saveGate?.complete(Unit)
+
+        assertEquals(1, repository.observeNotes().first().size)
+        assertEquals(1, analytics.events.size)
     }
 
     @Test

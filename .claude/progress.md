@@ -15,3 +15,4 @@ Do not edit by hand unless you also edit docs/TASKS.md.
 | E2 assembleProdRelease | done | R8 OK, 8.3 MB | |
 | E2b smoke test | done | release on API 36 emulator: list, create (found + fixed off-screen new note), permission, detail, edit, delete, undo, offline snackbar, tr, deep link /notes/3 + back ✓; no Chucker/LeakCanary in release dex | |
 | E3 final gate | done | all ✓ · ratio 0.41 · 162 tests · line coverage 92–98 % (detekt jvmTarget pinned to 17) | |
+| E4 code review | done | 10 findings: 8 fixed with regression tests, 2 skipped (SPEC Known exceptions) · daemon JVM → 17 | fix(review) |

@@ -44,12 +44,24 @@ class NoteDetailViewModelTest {
     }
 
     @Test
-    fun `given no note with the id, then shows not found`() = runTest {
+    fun `given no note with the id, then shows not found and tracks no open`() = runTest {
+        // regression
         repository.emit(listOf(sampleNote))
 
         val viewModel = createViewModel(noteId = 99)
 
         assertEquals(NoteDetailUiState.NotFound, viewModel.uiState.value)
+        assertEquals(emptyList(), analytics.events)
+    }
+
+    @Test
+    fun `given the note changes, then note_opened is still tracked once`() = runTest {
+        repository.emit(listOf(sampleNote))
+        createViewModel()
+
+        repository.emit(listOf(sampleNote.copy(body = "Updated")))
+
+        assertEquals(listOf(event("note_opened")), analytics.events)
     }
 
     @Test
@@ -112,6 +124,16 @@ class NoteDetailViewModelTest {
 
         viewModel.onDeleteErrorShown()
         assertNull(content(viewModel).deleteError)
+    }
+
+    @Test
+    fun `given the note is gone, when delete is confirmed, then shows the delete error`() = runTest {
+        val viewModel = createViewModel(noteId = 99)
+
+        viewModel.onDeleteConfirm()
+
+        assertEquals(NoteDetailUiState.NotFound, viewModel.uiState.value)
+        assertEquals(null, repository.recentlyDeleted.value)
     }
 
     private fun content(viewModel: NoteDetailViewModel) = assertIs<NoteDetailUiState.Content>(viewModel.uiState.value)

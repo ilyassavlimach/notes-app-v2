@@ -20,6 +20,8 @@ internal sealed interface NotesListUiState {
         val isRefreshing: Boolean,
         val refreshError: AppError?,
         override val undoNoteId: Long? = null,
+        /** Undo couldn't restore the note (e.g. a refresh removed it); shown once as a snackbar. */
+        val isRestoreFailed: Boolean = false,
         /** The user has notes of their own, so asking for notifications makes sense now (PUSH-01). */
         val canAskForNotifications: Boolean = false,
     ) : NotesListUiState

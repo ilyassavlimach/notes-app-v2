@@ -78,7 +78,8 @@ internal class NoteEditorViewModel @AssistedInject constructor(
 
     fun onSaveClick() {
         val state = uiState.value as? NoteEditorUiState.Editing ?: return
-        if (!state.canSave) return
+        // status is checked directly: uiState is derived and may not show isSaving yet on a fast second tap.
+        if (!state.canSave || status.value.isSaving || status.value.isClosed) return
         status.update { it.copy(isSaving = true, saveError = null) }
         viewModelScope.launch {
             val savedId = save(state.title.trim(), state.body.trim())

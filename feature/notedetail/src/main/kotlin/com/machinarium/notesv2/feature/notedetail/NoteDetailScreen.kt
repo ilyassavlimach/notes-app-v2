@@ -12,14 +12,12 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import com.machinarium.notesv2.core.common.result.AppError
 import com.machinarium.notesv2.core.designsystem.components.NotesV2AlertDialog
 import com.machinarium.notesv2.core.designsystem.components.NotesV2IconButton
 import com.machinarium.notesv2.core.designsystem.components.NotesV2TopAppBar
@@ -29,6 +27,7 @@ import com.machinarium.notesv2.core.i18n.R
 import com.machinarium.notesv2.core.ui.EmptyState
 import com.machinarium.notesv2.core.ui.ErrorState
 import com.machinarium.notesv2.core.ui.LoadingState
+import com.machinarium.notesv2.core.ui.SnackbarMessageEffect
 import com.machinarium.notesv2.core.ui.messageRes
 
 @Composable
@@ -44,7 +43,12 @@ internal fun NoteDetailScreen(
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    DeleteErrorEffect((uiState as? NoteDetailUiState.Content)?.deleteError, snackbarHostState, onDeleteErrorShown)
+    SnackbarMessageEffect(
+        trigger = (uiState as? NoteDetailUiState.Content)?.deleteError,
+        message = stringResource(R.string.notedetail_delete_failed),
+        snackbarHostState = snackbarHostState,
+        onShown = onDeleteErrorShown,
+    )
 
     Scaffold(
         modifier = modifier,
@@ -140,23 +144,6 @@ private fun DeleteConfirmDialog(
         onConfirm = onConfirm,
         onDismiss = onDismiss,
     )
-}
-
-@Composable
-private fun DeleteErrorEffect(
-    error: AppError?,
-    snackbarHostState: SnackbarHostState,
-    onShown: () -> Unit,
-) {
-    error ?: return
-    val message = stringResource(R.string.notedetail_delete_failed)
-    LaunchedEffect(error) {
-        try {
-            snackbarHostState.showSnackbar(message)
-        } finally {
-            onShown() // COMP-08: also when the screen leaves mid-snackbar
-        }
-    }
 }
 
 @PreviewLightDark

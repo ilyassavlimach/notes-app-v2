@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -35,9 +36,11 @@ internal class NoteDetailViewModel @AssistedInject constructor(
     private val isDeleteDialogVisible = MutableStateFlow(false)
     private val isDeleted = MutableStateFlow(false)
     private val deleteError = MutableStateFlow<AppError?>(null)
+    private var hasTrackedOpen = false
 
     private val noteState: Flow<NoteDetailUiState> = observeAttempt.flatMapLatest {
         notesRepository.observeNote(noteId)
+            .onEach { note -> if (note != null) trackOpenedOnce() }
             .map { note -> note?.let { NoteDetailUiState.Content(it.title, it.body) } ?: NoteDetailUiState.NotFound }
             .catch { emit(NoteDetailUiState.Error(AppError.Unknown)) }
     }
@@ -58,10 +61,6 @@ internal class NoteDetailViewModel @AssistedInject constructor(
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = NoteDetailUiState.Loading,
         )
-
-    init {
-        track(EVENT_NOTE_OPENED)
-    }
 
     fun onRetry() {
         observeAttempt.value++
@@ -90,6 +89,13 @@ internal class NoteDetailViewModel @AssistedInject constructor(
 
     fun onDeleteErrorShown() {
         deleteError.value = null
+    }
+
+    /** Tracked when the note is actually shown, so invalid links and deleted notes don't count as opens. */
+    private fun trackOpenedOnce() {
+        if (hasTrackedOpen) return
+        hasTrackedOpen = true
+        track(EVENT_NOTE_OPENED)
     }
 
     private fun track(eventName: String) {

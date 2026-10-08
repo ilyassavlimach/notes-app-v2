@@ -5,18 +5,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +42,7 @@ internal fun NotesListScreen(
     onAddNoteClick: () -> Unit,
     onRefresh: () -> Unit,
     onRefreshErrorShown: () -> Unit,
+    onRestoreErrorShown: () -> Unit,
     onUndoDelete: (noteId: Long) -> Unit,
     onUndoOffered: () -> Unit,
     onAllowNotificationsClick: () -> Unit,
@@ -57,8 +54,7 @@ internal fun NotesListScreen(
         !isNotificationPermissionGranted &&
         !isRationaleDismissed
     val snackbarHostState = remember { SnackbarHostState() }
-    RefreshErrorEffect(uiState, snackbarHostState, onRefreshErrorShown)
-    NoteDeletedEffect(uiState.undoNoteId, snackbarHostState, onUndoDelete, onUndoOffered)
+    NotesListMessages(uiState, snackbarHostState, onRefreshErrorShown, onRestoreErrorShown, onUndoDelete, onUndoOffered)
 
     Scaffold(
         modifier = modifier,
@@ -173,65 +169,6 @@ private fun NotesList(
     }
 }
 
-@Composable
-private fun RefreshErrorEffect(
-    uiState: NotesListUiState,
-    snackbarHostState: SnackbarHostState,
-    onShown: () -> Unit,
-) {
-    val error = (uiState as? NotesListUiState.Content)?.refreshError ?: return
-    val message = stringResource(R.string.noteslist_refresh_failed)
-    LaunchedEffect(error) {
-        try {
-            snackbarHostState.showSnackbar(message)
-        } finally {
-            // Also when the screen leaves composition mid-snackbar, so the error isn't replayed on return.
-            onShown()
-        }
-    }
-}
-
-/**
- * A note the user just created or edited is added at the top, but a lazy list keeps its scroll anchored to the
- * item that was first before, so the new note would sit off-screen. Scroll up when the top note changes — but
- * not on the first composition (e.g. coming back from a note), so the user's scroll position is kept.
- */
-@Composable
-private fun ScrollToNewTopNoteEffect(
-    topNoteId: Long?,
-    listState: LazyListState,
-) {
-    var lastTopNoteId by rememberSaveable { mutableStateOf(topNoteId) }
-    LaunchedEffect(topNoteId) {
-        if (topNoteId != null && topNoteId != lastTopNoteId) listState.animateScrollToItem(0)
-        lastTopNoteId = topNoteId
-    }
-}
-
-@Composable
-private fun NoteDeletedEffect(
-    noteId: Long?,
-    snackbarHostState: SnackbarHostState,
-    onUndo: (noteId: Long) -> Unit,
-    onOffered: () -> Unit,
-) {
-    noteId ?: return
-    val message = stringResource(R.string.noteslist_note_deleted)
-    val undoLabel = stringResource(R.string.noteslist_undo)
-    LaunchedEffect(noteId) {
-        try {
-            val result = snackbarHostState.showSnackbar(
-                message,
-                actionLabel = undoLabel,
-                duration = SnackbarDuration.Long,
-            )
-            if (result == SnackbarResult.ActionPerformed) onUndo(noteId)
-        } finally {
-            onOffered() // COMP-08: Undo is offered once, even if the screen leaves mid-snackbar
-        }
-    }
-}
-
 private const val EMPTY_KEY = "empty"
 private const val HEADER_KEY = "header"
 
@@ -246,6 +183,7 @@ private fun NotesListScreenContentPreview() {
             onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
+            onRestoreErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
             onAllowNotificationsClick = {},
@@ -264,6 +202,7 @@ private fun NotesListScreenEmptyPreview() {
             onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
+            onRestoreErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
             onAllowNotificationsClick = {},
@@ -282,6 +221,7 @@ private fun NotesListScreenErrorPreview() {
             onAddNoteClick = {},
             onRefresh = {},
             onRefreshErrorShown = {},
+            onRestoreErrorShown = {},
             onUndoDelete = {},
             onUndoOffered = {},
             onAllowNotificationsClick = {},

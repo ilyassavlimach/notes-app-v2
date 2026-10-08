@@ -49,8 +49,8 @@ interface NoteDao {
     @Upsert
     suspend fun upsertAll(notes: List<NoteEntity>)
 
-    @Query("DELETE FROM notes WHERE syncState = 'SYNCED' AND isDeleted = 0 AND remoteId NOT IN (:remoteIds)")
-    suspend fun deleteSyncedNotIn(remoteIds: List<Long>)
+    @Query("DELETE FROM notes WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<Long>)
 
     /**
      * Merges a fresh API copy in one transaction: new posts are inserted, unchanged ones updated, and posts that
@@ -68,8 +68,17 @@ interface NoteDao {
             }
         }
         upsertAll(writable)
-        deleteSyncedNotIn(remoteNotes.mapNotNull(NoteEntity::remoteId))
+        // Stale ids are computed here and deleted in chunks: one NOT IN (:allRemoteIds) would exceed SQLite's
+        // 999-variable limit on older devices once the API returns more than 999 notes.
+        val remoteIds = remoteNotes.mapNotNullTo(HashSet(), NoteEntity::remoteId)
+        existing.values
+            .filter { it.syncState == SyncState.SYNCED && !it.isDeleted && it.remoteId !in remoteIds }
+            .map(NoteEntity::id)
+            .chunked(MAX_SQL_VARIABLES)
+            .forEach { deleteByIds(it) }
     }
 }
+
+private const val MAX_SQL_VARIABLES = 900
 
 private fun NoteEntity.isProtectedFromRefresh(): Boolean = syncState == SyncState.LOCAL || isDeleted

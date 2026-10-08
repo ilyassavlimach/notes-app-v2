@@ -9,4 +9,5 @@
     <string name="noteslist_notifications_rationale">Notlarınla ilgili hatırlatma ve güncellemeler almak için bildirimleri aç.</string>
     <string name="noteslist_notifications_allow">Aç</string>
     <string name="noteslist_notifications_not_now">Şimdi değil</string>
+    <string name="noteslist_undo_failed">Not geri getirilemedi.</string>
 </resources>

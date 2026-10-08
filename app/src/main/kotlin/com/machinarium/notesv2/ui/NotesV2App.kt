@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -40,9 +41,11 @@ internal fun NotesV2App(
     modifier: Modifier = Modifier,
     appGateViewModel: AppGateViewModel = hiltViewModel(),
 ) {
+    // Above the gate branch: a gate that blocks and reopens must not reset where the user was.
+    val backStack = rememberNavBackStack(NotesListKey)
     val gateState by appGateViewModel.state.collectAsStateWithLifecycle()
     if (gateState == AppGateState.Open) {
-        NotesV2NavDisplay(pendingDeepLink, onDeepLinkHandled, modifier)
+        NotesV2NavDisplay(backStack, pendingDeepLink, onDeepLinkHandled, modifier)
     } else {
         AppGate(gateState, modifier)
     }
@@ -68,11 +71,11 @@ private fun AppGate(
 
 @Composable
 private fun NotesV2NavDisplay(
+    backStack: NavBackStack<NavKey>,
     pendingDeepLink: List<NavKey>?,
     onDeepLinkHandled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val backStack = rememberNavBackStack(NotesListKey)
     LaunchedEffect(pendingDeepLink) {
         pendingDeepLink ?: return@LaunchedEffect
         backStack.clear()

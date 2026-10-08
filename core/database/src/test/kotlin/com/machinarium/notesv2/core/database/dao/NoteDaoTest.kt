@@ -143,6 +143,16 @@ class NoteDaoTest {
         assertEquals("New", noteDao.observeVisibleById(id).first()?.title)
     }
 
+    @Test
+    fun `given more than 999 stale synced notes, when merged, then all are removed`() = runTest {
+        // regression
+        noteDao.mergeRemote((1L..1_200L).map { remote(remoteId = it) })
+
+        noteDao.mergeRemote(listOf(remote(remoteId = 1)))
+
+        assertEquals(listOf(1L), noteDao.observeVisible().first().map(NoteEntity::remoteId))
+    }
+
     private fun remote(
         remoteId: Long,
         title: String = "Remote $remoteId",
