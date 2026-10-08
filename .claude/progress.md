@@ -13,4 +13,5 @@ Do not edit by hand unless you also edit docs/TASKS.md.
 | config (app gate) | done | build ✓ static ✓ tests ✓ rules ✓ dead-code 0 · ratio 0.41 | feat(config) |
 | E1 hardening | done | pins for jsonplaceholder (WE1 + GTS R4, backups GTS R1 + ISRG X1, 2026-10-08) | fix(noteslist) |
 | E2 assembleProdRelease | done | R8 OK, 8.3 MB | |
-| E2b smoke test | in progress | release on API 36 emulator: list, create (found + fixed off-screen new note), permission, detail, edit, delete, undo ✓; still to do: offline, tr, deep link | |
+| E2b smoke test | done | release on API 36 emulator: list, create (found + fixed off-screen new note), permission, detail, edit, delete, undo, offline snackbar, tr, deep link /notes/3 + back ✓; no Chucker/LeakCanary in release dex | |
+| E3 final gate | done | all ✓ · ratio 0.41 · 162 tests · line coverage 92–98 % (detekt jvmTarget pinned to 17) | |
